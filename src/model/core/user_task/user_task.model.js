@@ -7,16 +7,16 @@ const user_taskModel = sequelize.define("user tasks", {
   userTask_id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
-    autoIncrement: true
+    autoIncrement: true,
   },
 
   user_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    references:{
+    references: {
       key: "user_id",
-      model: userModel
-    }
+      model: userModel,
+    },
   },
 
   task_id: {
@@ -24,8 +24,8 @@ const user_taskModel = sequelize.define("user tasks", {
     allowNull: false,
     references: {
       key: "task_id",
-      model: tasksModel
-    }
+      model: tasksModel,
+    },
   },
 });
 

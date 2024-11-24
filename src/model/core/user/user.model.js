@@ -19,14 +19,14 @@ const userModel = sequelize.define("users", {
     allowNull: false,
   },
 
-  password : {
+  password: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
   },
 
   role: {
     type: DataTypes.STRING,
-    defaultValue: ["admin", "xodim"], 
+    defaultValue: ["admin", "xodim"],
   },
 
   tugilgan_sana: {

@@ -1,14 +1,14 @@
 import { Sequelize } from "sequelize";
-import getConfig from "../config/config.service.js";
+import getDotEnv from "../config/dotenv.config.js";
 
 const sequelize = new Sequelize(
-  getConfig("DATABASE_NAME"),
-  getConfig("DATABASE_USER"),
-  getConfig("DATABASE_PASSWORD"),
+  getDotEnv("DATABASE_NAME"),
+  getDotEnv("DATABASE_USER"),
+  getDotEnv("DATABASE_PASSWORD"),
   {
-    host: getConfig("DATABASE_HOST"),
+    host: getDotEnv("DATABASE_HOST"),
     dialect: "postgres",
-    port: parseInt(getConfig("DATABASE_PORT")),
+    port: parseInt(getDotEnv("DATABASE_PORT")),
   }
 );
 

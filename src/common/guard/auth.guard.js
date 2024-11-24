@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import getConfig from "../common/config/config.service.js";
+import getDotEnv from "../common/config/config.service.js";
 import userModel from "../../model/core/users/user.model.js";
 
 async function authGuard(req, res, next) {
@@ -8,17 +8,17 @@ async function authGuard(req, res, next) {
     res.status(401).send("Kalit berilmagan!");
   }
   try {
-    const result = await jwt.verify(token, getConfig("JWT_SECRET"));
+    const result = await jwt.verify(token, getDotEnv("JWT_SECRET"));
     req.user = await userModel.findOne({ where: { email: result.email } });
 
     if (!req.user) {
-      return res.status(401).send("Ushbu tokeendagi foydalanuvchi topilmadi!"); 
+      return res.status(401).send("Ushbu tokeendagi foydalanuvchi topilmadi!");
     }
     // console.log("auth error => ", result)
 
     next();
   } catch (err) {
-    console.log("auth error => ", err)
+    console.log("auth error => ", err);
     res.status(401).send("So'rovga huquqingiz yetarli emas auth!");
   }
 }

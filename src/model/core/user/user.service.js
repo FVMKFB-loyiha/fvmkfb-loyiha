@@ -1,8 +1,8 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import getConfig from "../../../common/config/config.service.js";
+import getDotEnv from "../../../common/config/dotenv.config.js";
 // import searchUsers from "../../../common/utils/search.js";
-import fileSysteam from "fs";
+import fileSystem from "fs";
 import { Op } from "sequelize";
 import userModel from "./user.model.js";
 
@@ -27,24 +27,20 @@ export async function registerUser(req, res) {
       return res.status(400).send("User email allaqachon ro'yxatdan o'tgan.");
     }
 
-
-
     if (req.file) {
-      newUser.rasm = req.file.destination + req.file.filename;
+      newUser.photo = req.file.destination + req.file.filename;
     }
-    let borFoydalanuvchilar = fayldanOqish("rasm.json");
+    let existUsers = readFromFile("photo.json");
 
-    if (!borFoydalanuvchilar) {
-      borFoydalanuvchilar = [];
-      faylgaYozish("rasm.json", [newUser]);
+    if (!existUsers) {
+      existUsers = [];
+      writeToFile("photo.json", [newUser]);
       console.log("foydalanuvchi muvaffaqiyatli ro'yxatdan o'tdi");
     } else {
-      borFoydalanuvchilar.push(newUser);
-      faylgaYozish("rasm.json", borFoydalanuvchilar);
+      existUsers.push(newUser);
+      writeToFile("photo.json", existUsers);
     }
 
-
-    
     const hashedPassword = await bcrypt.hash(newUser.password, 10);
     const result = await userModel.create({
       ...newUser,
@@ -63,18 +59,18 @@ export async function registerUser(req, res) {
   }
 }
 
-export function faylgaYozish(manzil, malumot) {
-  fileSysteam.writeFileSync(manzil, JSON.stringify(malumot));
+export function writeToFile(address, data) {
+  fileSystem.writeFileSync(address, JSON.stringify(data));
 }
 
-export function fayldanOqish(manzil) {
+export function readFromFile(address) {
   try {
-    const fayilMavjudligi = fileSysteam.existsSync(manzil);
-    if (!fayilMavjudligi) return null; // Fayl topilmasa null qaytaramiz
+    const existFile = fileSystem.existsSync(address);
+    if (!existFile) return null; // Fayl topilmasa null qaytaramiz
 
-    const malumotlarString = fileSysteam.readFileSync(manzil);
-    const malumot = JSON.parse(malumotlarString);
-    return malumot;
+    const stringData = fileSystem.readFileSync(address);
+    const data = JSON.parse(stringData);
+    return data;
   } catch (error) {
     console.error("Fayldan o'qishda xatolik:", error);
     return null; // Xatolik bo'lsa null qaytaramiz
@@ -101,11 +97,11 @@ export async function loginUser(req, res) {
     }
 
     const postmandagiLoginMalumotlari = req.body;
-    const borFoydalanuvchilar = fayildanOqish("foydalanuvchilar.json");
-    for (let i = 0; i < borFoydalanuvchilar.length; i = i + 1) {
+    const existUsers = fayildanOqish("foydalanuvchilar.json");
+    for (let i = 0; i < existUsers.length; i = i + 1) {
       if (
-        borFoydalanuvchilar[i].email === postmandagiLoginMalumotlari.email &&
-        borFoydalanuvchilar[i].password === postmandagiLoginMalumotlari.password
+        existUsers[i].email === postmandagiLoginMalumotlari.email &&
+        existUsers[i].password === postmandagiLoginMalumotlari.password
       ) {
         return res.send("siz tizimga muvaffaqiyatli kirdiz");
       }
@@ -121,7 +117,7 @@ export async function loginUser(req, res) {
 }
 
 function generateToken(data) {
-  return jwt.sign(data, getConfig("JWT_SECRET"), { expiresIn: "1d" });
+  return jwt.sign(data, getDotEnv("JWT_SECRET"), { expiresIn: "1d" });
 }
 
 export async function searchUserController(req, res) {
@@ -225,12 +221,12 @@ export async function getAllUser(req, res) {
 
     const totalUsers = await userModel.count();
 
-    const jamiSahifalar = Math.ceil(totalUsers / limit);
+    const totalPages = Math.ceil(totalUsers / limit);
 
     res.status(200).send({
       users: result,
-      jamiSahifalar,
-      joriySahifa: page,
+      totalPages,
+      currentPage: page,
     });
   } catch (err) {
     console.error("user xatoligi", err);

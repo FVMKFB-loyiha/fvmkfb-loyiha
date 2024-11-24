@@ -13,9 +13,9 @@ const notificationModel = sequelize.define("notifications", {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      key: "user_id", 
-      model: userModel
-    }
+      key: "user_id",
+      model: userModel,
+    },
   },
 
   message: {
@@ -26,7 +26,7 @@ const notificationModel = sequelize.define("notifications", {
   status: {
     type: DataTypes.ENUM("unread", "read"),
     defaultValue: "unread",
-  }
+  },
 });
 
 export default notificationModel;

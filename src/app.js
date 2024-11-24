@@ -1,5 +1,5 @@
 import express from "express";
-import getConfig from "./common/config/config.service.js";
+import getDotEnv from "./common/config/config.service.js";
 import connectToDb from "./common/database/database.js";
 import { userRouter, userTaskRouter, taskRouter } from "./model/routes";
 import http from "http";
@@ -17,7 +17,7 @@ const io = new Server(server, {
 
 const { Client } = pg;
 
-const PORT = getConfig("EXPRESS_PORT") || 3000;
+const PORT = getDotEnv("EXPRESS_PORT") || 3000;
 
 function initRoutes() {
   app.use("/user", userRouter);
@@ -28,11 +28,11 @@ function initRoutes() {
 
 // Ma'lumotlar bazasi bilan ulanish
 const client = new Client({
-  user: getConfig("DATABASE_USER"),
-  host: getConfig("DATABASE_HOST"),
-  database: getConfig("DATABASE_NAME"),
-  password: getConfig("DATABASE_PASSWORD"),
-  port: parseInt(getConfig("DATABASE_PORT")),
+  user: getDotEnv("DATABASE_USER"),
+  host: getDotEnv("DATABASE_HOST"),
+  database: getDotEnv("DATABASE_NAME"),
+  password: getDotEnv("DATABASE_PASSWORD"),
+  port: parseInt(getDotEnv("DATABASE_PORT")),
 });
 
 client.connect();
@@ -74,7 +74,7 @@ async function init() {
 init();
 
 // import express from "express"
-// import getConfig from "./common/config/config.service.js";
+// import getDotEnv from "./common/config/config.service.js";
 // import connectToDb from "./common/database/database.js"
 // import userRouter from "./model/controller/userController.js";
 // import userTaskRouter from "./model/controller/userTaskController.js";
@@ -92,7 +92,7 @@ init();
 // const { Client } = pg;
 
 // const PORT = process.env.PORT || 3000;
-// // const PORT = getConfig("EXPRESS_PORT")
+// // const PORT = getDotEnv("EXPRESS_PORT")
 
 // function initRoutes(){
 //     app.use("/user", userRouter)
@@ -103,11 +103,11 @@ init();
 
 // // Ma'lumotlar bazasi bilan ulanish
 // const client = new Client({
-//   user: getConfig("DATABASE_USER"),
-//   host: getConfig("DATABASE_HOST"),
-//   database: getConfig("DATABASE_NAME"),
-//   password: getConfig("DATABASE_PASSWORD"),
-//   port: parseInt(getConfig("DATABASE_PORT")),
+//   user: getDotEnv("DATABASE_USER"),
+//   host: getDotEnv("DATABASE_HOST"),
+//   database: getDotEnv("DATABASE_NAME"),
+//   password: getDotEnv("DATABASE_PASSWORD"),
+//   port: parseInt(getDotEnv("DATABASE_PORT")),
 // });
 
 // client.connect();

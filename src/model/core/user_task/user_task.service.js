@@ -19,7 +19,6 @@ export async function addUserTask(req, res) {
   }
 }
 
-
 export async function getAllUserTask(req, res) {
   try {
     const result = await user_taskModel.findAll();
