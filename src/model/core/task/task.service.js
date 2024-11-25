@@ -4,7 +4,7 @@ import {
   updateTaskValidator,
 } from "../../validator/taskValidator.js";
 import userModel from "../user/user.model.js";
-import { fayldanOqish, faylgaYozish } from "../user/user.service.js";
+import { readFromFile, writeToFile } from "../user/user.service.js";
 import tasksModel from "./task.model.js";
 
 export async function addTask(req, res) {
@@ -24,17 +24,16 @@ export async function addTask(req, res) {
     if (req.file) {
       newTask.file = req.file.destination + req.file.filename;
     }
-    let borVazifalar = fayldanOqish("file.json");
+    let borVazifalar = readFromFile("file.json");
 
     if (!borVazifalar) {
-
       borVazifalar = [];
-      
-      faylgaYozish("file.json", [newTask]);
+
+      writeToFile("file.json", [newTask]);
       console.log("foydalanuvchi muvaffaqiyatli ro'yxatdan o'tdi");
     } else {
       borVazifalar.push(newTask);
-      faylgaYozish("file.json", borVazifalar);
+      writeToFile("file.json", borVazifalar);
     }
 
     const result = await tasksModel.create(newTask); // Bazaga yozish
@@ -54,7 +53,7 @@ export async function getAllTask(req, res) {
       include: {
         model: userModel,
         attributes: [
-          "ism_familiya",
+          "fullname",
           "role",
           "tugilgan_sana",
           "bolim",
@@ -63,7 +62,7 @@ export async function getAllTask(req, res) {
           "malumoti",
           "talim_davri",
           "mutaxasisligi",
-          "telefon_nomeri",
+          "phone",
         ],
       },
     });

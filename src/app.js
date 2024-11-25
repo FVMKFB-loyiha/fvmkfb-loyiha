@@ -1,14 +1,24 @@
 import express from "express";
-import getDotEnv from "./common/config/config.service.js";
+import getDotEnv from "./common/config/dotenv.config.js";
 import connectToDb from "./common/database/database.js";
-import { userRouter, userTaskRouter, taskRouter } from "./model/routes";
+import {
+  userRouter,
+  userTaskRouter,
+  taskRouter,
+} from "./model/routes/index.js";
+import { initializeSocket } from "./model/routes/notification.router.js";
+// import userTaskRouter from "./model/routes/userTask.router.js";
+// import userRouter from "./model/routes/user.router.js";
+// import taskRouter from "./model/routes/task.router.js";
+
 import http from "http";
 import pg from "pg";
 import { Server } from "socket.io";
 import NotificationRouter from "./model/routes/notification.router.js";
-
+import { fileURLToPath } from "url";
 const app = express();
 const server = http.createServer(app);
+initializeSocket(server);
 const io = new Server(server, {
   cors: {
     origin: "*", // Zaruriy domenlarni belgilang

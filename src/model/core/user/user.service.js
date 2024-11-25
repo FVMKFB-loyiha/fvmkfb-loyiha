@@ -92,24 +92,19 @@ export async function loginUser(req, res) {
     }
 
     const existingUser = await findUserByEmail(email);
+
     if (!existingUser) {
       return res.status(404).send("Foydalanuvchi topilmadi.");
     }
 
-    const postmandagiLoginMalumotlari = req.body;
-    const existUsers = fayildanOqish("foydalanuvchilar.json");
-    for (let i = 0; i < existUsers.length; i = i + 1) {
-      if (
-        existUsers[i].email === postmandagiLoginMalumotlari.email &&
-        existUsers[i].password === postmandagiLoginMalumotlari.password
-      ) {
-        return res.send("siz tizimga muvaffaqiyatli kirdiz");
-      }
+    if (existingUser.email === email && existingUser.password === password) {
+      res.status(200).send({
+        message: "siz tizimga muvaffaqiyatli kirdiz",
+        token: generateToken({ email: existingUser.email }),
+      });
+    } else {
+      res.send("parol notog'ri");
     }
-
-    res.status(200).send({
-      token: await generateToken({ email: existingUser.email }),
-    });
   } catch (err) {
     console.error("Xatolik yuz berdi:", err);
     res.status(500).send("Login jarayonida xatolik yuz berdi: " + err.message);
@@ -120,23 +115,17 @@ function generateToken(data) {
   return jwt.sign(data, getDotEnv("JWT_SECRET"), { expiresIn: "1d" });
 }
 
+// sorting users ✅
 export async function searchUserController(req, res) {
   try {
-    const {
-      searchTerm,
-      ism_familiya,
-      bolim,
-      lavozim,
-      malumoti,
-      email,
-      createdAt,
-    } = req.query;
+    const { searchTerm, fullname, bolim, lavozim, malumoti, email, createdAt } =
+      req.query;
 
     let where = {};
 
     if (searchTerm) {
       where[Op.or] = [
-        { ism_familiya: { [Op.iLike]: `%${searchTerm}%` } },
+        { fullname: { [Op.iLike]: `%${searchTerm}%` } },
         { bolim: { [Op.iLike]: `%${searchTerm}%` } },
         { lavozim: { [Op.iLike]: `%${searchTerm}%` } },
         { malumoti: { [Op.iLike]: `%${searchTerm}%` } },
@@ -145,8 +134,8 @@ export async function searchUserController(req, res) {
       ];
     }
 
-    if (ism_familiya) {
-      where.ism_familiya = { [Op.iLike]: `%${ism_familiya}%` };
+    if (fullname) {
+      where.fullname = { [Op.iLike]: `%${fullname}%` };
     }
 
     if (bolim) {
@@ -192,6 +181,7 @@ export async function searchUserController(req, res) {
   }
 }
 
+// pagination ✅
 export async function getAllUser(req, res) {
   try {
     const { page = 1, limit = 10 } = req.query;
@@ -200,9 +190,8 @@ export async function getAllUser(req, res) {
     const result = await userModel.findAll({
       limit,
       offset,
-      // ... other options (e.g., sorting, filtering)
       attributes: [
-        "ism_familiya",
+        "fullname",
         "role",
         "tugilgan_sana",
         "bolim",
@@ -211,7 +200,7 @@ export async function getAllUser(req, res) {
         "malumoti",
         "talim_davri",
         "mutaxasisligi",
-        "telefon_nomeri",
+        "phone",
       ],
       include: {
         model: tasksModel,
@@ -235,7 +224,7 @@ export async function getAllUser(req, res) {
       .send("Foydalanuvchilarni olishda xatolik yuz berdi: " + err.message);
   }
 }
-
+// get by ID ✅
 export async function getUser(req, res) {
   try {
     const { id } = req.params;
@@ -247,9 +236,7 @@ export async function getUser(req, res) {
     const result = await userModel.findByPk(id);
 
     if (!result) {
-      res
-        .status(401)
-        .send("bunday id dagi foydalanuvchi yo'q yoki o'chirilgan!");
+      res.status(401).send("Bunday ID'lik foydalanuchi topilmadi!");
     }
 
     res.status(200).send(result);
@@ -261,6 +248,7 @@ export async function getUser(req, res) {
   }
 }
 
+// hali to'liq emas 🔰
 export async function updateUser(req, res) {
   try {
     const { id } = req.params;
@@ -284,6 +272,7 @@ export async function updateUser(req, res) {
   }
 }
 
+//delete user from DB ✅
 export async function deleteUser(req, res) {
   try {
     const { id } = req.params;

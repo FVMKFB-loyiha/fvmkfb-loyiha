@@ -1,5 +1,5 @@
-import userRouter from "./user.router";
-import userTaskRouter from "./userTask.router";
-import taskRouter from "./task.router";
+import userRouter from "./user.router.js";
+import userTaskRouter from "./userTask.router.js";
+import taskRouter from "./task.router.js";
 
 export { userRouter, userTaskRouter, taskRouter };

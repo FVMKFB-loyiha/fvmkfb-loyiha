@@ -1,9 +1,20 @@
 import multer from "multer";
 import path from "path";
-
+import fs from "fs";
 // Multer saqlash konfiguratsiyasi
+const uploadDir = "../uploads/userphotos";
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true }); // direktiv yo'q bo'lsa, yaratib beradi
+}
+
 const storage = multer.diskStorage({
-  destination: "../uploads/", // Yuklangan fayllar saqlanadigan joy
+  destination: (req, file, callback) => {
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    callback(null, uploadDir);
+  },
   filename: function (req, file, callback) {
     callback(
       null,
@@ -12,10 +23,11 @@ const storage = multer.diskStorage({
   },
 });
 
+const upload = multer({ storage });
+
 // Fayl filtrini aniqlash
 const fileFilter = (req, file, callback) => {
-  // Ruxsat berilgan fayl turlari
-  const allowedFileTypes = [".jpg", ".jpeg", ".png"];
+  const allowedFileTypes = [".jpg", ".jpeg", ".png"]; // Ruxsat berilgan fayl turlari
   const extname = path.extname(file.originalname).toLowerCase();
 
   if (allowedFileTypes.includes(extname)) {

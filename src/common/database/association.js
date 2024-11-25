@@ -1,5 +1,9 @@
 import notificationModel from "../../model/core/notification/notification.model.js";
-import { tasksModel, userModel, user_taskModel } from "../../model/core/";
+import {
+  tasksModel,
+  userModel,
+  user_taskModel,
+} from "../../model/core/index.js";
 
 function setupModels() {
   userModel.belongsToMany(tasksModel, {

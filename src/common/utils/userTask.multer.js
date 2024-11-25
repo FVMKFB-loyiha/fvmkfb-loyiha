@@ -11,7 +11,12 @@ const storage = multer.diskStorage({
   },
 });
 
-const fileDownload = multer({ storage }).single("file");
+const fileDownload = multer({
+  storage,
+  limits: {
+    fileSize: 25 * 1024 * 1024, // Maksimal fayl hajmi: 25MB
+  },
+}).single("file");
 
 export function fileDownloadMiddleware(req, res, next) {
   fileDownload(req, res, (err) => {

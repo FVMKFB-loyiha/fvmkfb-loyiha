@@ -1,7 +1,7 @@
 import Joi from "joi";
 
 export const registerUserValidator = Joi.object({
-  ism_familiya: Joi.string().required(),
+  fullname: Joi.string().required(),
   email: Joi.string().required(),
   role: Joi.string().required(),
   password: Joi.string().required().min(9),
@@ -13,7 +13,7 @@ export const registerUserValidator = Joi.object({
   mutaxasisligi: Joi.string().required(),
   talim_muassasasi: Joi.string().required(),
   talim_davri: Joi.string().required(),
-  telefon_nomeri: Joi.string().required(),
+  phone: Joi.string().required(),
 });
 
 export const loginUserValidator = Joi.object({
@@ -28,7 +28,7 @@ export const getUserValidator = Joi.object({
 });
 
 export const updateUserValidator = Joi.object({
-  ism_familiya: Joi.string().required(),
+  fullname: Joi.string().required(),
   email: Joi.string().required(),
   role: Joi.string().required(),
   password: Joi.string().required().min(9),
@@ -40,5 +40,5 @@ export const updateUserValidator = Joi.object({
   mutaxasisligi: Joi.string().required(),
   talim_muassasasi: Joi.string().required(),
   talim_davri: Joi.string().required(),
-  telefon_nomeri: Joi.string().required(),
+  phone: Joi.string().required(),
 });
