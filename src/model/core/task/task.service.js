@@ -4,7 +4,7 @@ import {
   updateTaskValidator,
 } from "../../validator/taskValidator.js";
 import userModel from "../user/user.model.js";
-import { readFromFile, writeToFile } from "../user/user.service.js";
+// import { readFromFile, writeToFile } from "../user/user.service.js";
 import tasksModel from "./task.model.js";
 
 export async function addTask(req, res) {
@@ -55,7 +55,7 @@ export async function getAllTask(req, res) {
         attributes: [
           "fullname",
           "role",
-          "tugilgan_sana",
+          "birth_date",
           "bolim",
           "lavozim",
           "talim_muassasasi",

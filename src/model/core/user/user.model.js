@@ -21,57 +21,29 @@ const userModel = sequelize.define(
       allowNull: false,
     },
 
-    password: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-
-    role: {
-      type: DataTypes.STRING,
-      defaultValue: ["admin", "xodim"],
-    },
-
-    tugilgan_sana: {
+    birth_date: {
       type: DataTypes.DATE,
       allowNull: false,
     },
 
-    rasm: {
+
+    picture: {
       type: DataTypes.STRING,
       allowNull: false,
     },
 
-    file: {
+    file:{
+      type: DataTypes.STRING,
+      allowNull:true
+    },
+
+    department: {
       type: DataTypes.STRING,
       allowNull: false,
     },
 
-    bolim: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
 
-    lavozim: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-
-    talim_muassasasi: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-
-    malumoti: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-
-    talim_davri: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-
-    mutaxasisligi: {
+    position: {
       type: DataTypes.STRING,
       allowNull: false,
     },

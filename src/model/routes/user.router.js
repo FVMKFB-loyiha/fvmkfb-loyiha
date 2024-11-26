@@ -8,7 +8,7 @@ import {
   searchUserController,
   updateUser,
 } from "../core/user/user.service.js";
-import { profilePicMiddleware } from "../../common/utils/rasmYuklash.js";
+import { profilePicMiddleware } from "../../middlewares/rasmYuklash.js";
 
 // import authGuard from "../../guard/auth.guard.js";
 

@@ -1,8 +1,7 @@
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import getDotEnv from "../../../common/config/dotenv.config.js";
 // import searchUsers from "../../../common/utils/search.js";
-import fileSystem from "fs";
+// import fileSystem from "fs";
 import { Op } from "sequelize";
 import userModel from "./user.model.js";
 
@@ -13,9 +12,16 @@ import {
   updateUserValidator,
 } from "../../validator/userValidator.js";
 import tasksModel from "../task/task.model.js";
+import eduModel from "./userEdu.model.js";
+// import { profilePicMiddleware } from "../../../middlewares/rasmYuklash.js";
 
+// rasm saqlanadigan direktoriya ✅
+const uploadDir = "../uploads/userphotos";
+
+// register user service toliq emas 🔰
 export async function registerUser(req, res) {
   try {
+<<<<<<< HEAD
     const {
       name,
       lastname,
@@ -87,10 +93,55 @@ export async function registerUser(req, res) {
       .send(
         "Foydalanuvchini ro'yxatdan o'tkazishda xatolik yuz berdi: " +
           err.message
+=======
+    const { fullname, email, birth_date, department, position, phone, edu } = req.body;
+
+    let picture = req.file ? req.file.filename : "default-ava.jpg";
+    let filePath = req.file ? req.file.path : null;
+
+    let eduParse = JSON.parse(edu)
+
+    // Foydalanuvchi ma'lumotlarini yaratish
+    const user = await userModel.create({
+      fullname,
+      email,
+      birth_date,
+      picture,
+      file: filePath,
+      department,
+      position,
+      phone,
+    });
+
+    // Edu ma'lumotlarini tekshirish
+    if (edu && Array.isArray(eduParse)) {
+      await Promise.all(
+        eduParse.map(async (eduItem) => {
+          await eduModel.create({
+            edu_name: eduItem.edu_name,
+            study_year: eduItem.study_year,
+            degree: eduItem.degree,
+            specialty: eduItem.specialty,
+            user_id: user.user_id, // Foydalanuvchi IDsi
+          });
+        })
+>>>>>>> b76790642a863fe0831b7395bb5aa5b7d5ba6b1c
       );
+    }
+
+    res.status(201).json({
+      message: "Foydalanuvchi muvaffaqiyatli ro'yxatdan o'tdi",
+      user, // Yangi foydalanuvchi haqida ma'lumot
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Foydalanuvchi ro'yxatdan o'tkazishda xatolik yuz berdi",
+      error: err.message, // Aniqroq xatolik ma'lumoti
+    });
   }
 }
 
+<<<<<<< HEAD
 // export async function registerUser(req, res) {
 try {
   const newUser = req.body;
@@ -184,10 +235,13 @@ function findUserByEmail(email) {
     where: { email: email },
   });
 }
+=======
+>>>>>>> b76790642a863fe0831b7395bb5aa5b7d5ba6b1c
 
+// hali to'liq emas 🔰
 export async function loginUser(req, res) {
   try {
-    const { email, password } = req.body;
+    const { email, phone } = req.body;
     const { error } = loginUserValidator.validate(req.body);
     if (error) {
       return res.status(400).send(error.details[0].message);
@@ -199,11 +253,12 @@ export async function loginUser(req, res) {
       return res.status(404).send("Foydalanuvchi topilmadi.");
     }
 
-    if (existingUser.email === email && existingUser.password === password) {
+    if (existingUser.email === email && existingUser.phone === phone) {
       res.status(200).send({
         message: "siz tizimga muvaffaqiyatli kirdiz",
-        token: generateToken({ email: existingUser.email }),
+        token: generateToken({ email: existingUser.email, role:"hodim" }),
       });
+      
     } else {
       res.send("parol notog'ri");
     }
@@ -295,7 +350,7 @@ export async function getAllUser(req, res) {
       attributes: [
         "fullname",
         "role",
-        "tugilgan_sana",
+        "birth_date",
         "bolim",
         "lavozim",
         "talim_muassasasi",
@@ -335,10 +390,16 @@ export async function getUser(req, res) {
       return res.status(400).send(error.details[0].message);
     }
 
-    const result = await userModel.findByPk(id);
+    const result = await userModel.findByPk(id, {
+      include: [{
+        model: eduModel, // Specify the related model
+        required: false,  // Whether to include users even if they don't have education records
+      }]
+    });
+    
 
     if (!result) {
-      res.status(401).send("Bunday ID'lik foydalanuchi topilmadi!");
+      return res.status(401).send("Bunday ID'lik foydalanuchi topilmadi!");
     }
 
     res.status(200).send(result);
@@ -355,10 +416,10 @@ export async function updateUser(req, res) {
   try {
     const { id } = req.params;
     const updatedUser = req.body;
-    const { error: idError } = getUserValidator.validate(req.params);
-    if (idError) {
-      return res.status(400).send(idError.details[0].message);
-    }
+    // const { error: idError } = getUserValidator.validate(req.params);
+    // if (idError) {
+    //   return res.status(400).send(idError.details[0].message);
+    // }
     const { error: bodyError } = updateUserValidator.validate(req.body);
     if (bodyError) {
       return res.status(400).send(bodyError.details[0].message);
