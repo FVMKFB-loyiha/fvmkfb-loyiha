@@ -16,9 +16,11 @@ import pg from "pg";
 import { Server } from "socket.io";
 import NotificationRouter from "./model/routes/notification.router.js";
 import { fileURLToPath } from "url";
+import { client } from "./common/database/config.js";
 const app = express();
 const server = http.createServer(app);
 initializeSocket(server);
+
 const io = new Server(server, {
   cors: {
     origin: "*", // Zaruriy domenlarni belgilang
@@ -37,14 +39,6 @@ function initRoutes() {
 }
 
 // Ma'lumotlar bazasi bilan ulanish
-const client = new Client({
-  user: getDotEnv("DATABASE_USER"),
-  host: getDotEnv("DATABASE_HOST"),
-  database: getDotEnv("DATABASE_NAME"),
-  password: getDotEnv("DATABASE_PASSWORD"),
-  port: parseInt(getDotEnv("DATABASE_PORT")),
-});
-
 client.connect();
 
 // Ishchi hodimlar sonini hisoblash uchun SQL so'rovi
