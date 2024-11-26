@@ -55,7 +55,7 @@ export async function getAllTask(req, res) {
         attributes: [
           "fullname",
           "role",
-          "tugilgan_sana",
+          "birth_date",
           "bolim",
           "lavozim",
           "talim_muassasasi",

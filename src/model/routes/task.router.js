@@ -7,7 +7,7 @@ import {
   getTask,
   updateTask,
 } from "../core/task/task.service.js";
-import { fileDownloadMiddleware } from "../../common/utils/userTask.multer.js";
+import { fileDownloadMiddleware } from "../../middlewares/userTask.multer.js";
 
 const taskRouter = Router();
 

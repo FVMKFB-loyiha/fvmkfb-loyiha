@@ -9,6 +9,7 @@
     "cSpell.ignoreRegExpList": [
       "/\\*.*?\\*/", // Ko'p qatorli sharhlar
       "//.*", // Bir qatorli sharhlar
-      "#.*" // # bilan boshlanuvchi sharhlar
+      "#.*",
+      "\".*?\""  // # bilan boshlanuvchi sharhlar
     ]
 }

@@ -13,13 +13,14 @@ const tasksModel = sequelize.define("tasks", {
     allowNull: false,
   },
 
-  file: {
+  file_path: {
     type: DataTypes.STRING,
+    allowNull: true
   },
 
   status: {
-    type: DataTypes.ENUM('jarayonda', 'bajarildi', 'bekor qilindi'),
-    defaultValue: 'jarayonda',
+    type: DataTypes.ENUM('kutilmoqda','jarayonda', 'bajarildi', 'bekor qilindi'),
+    defaultValue: 'kutilmoqda',
     allowNull: true,
   },
 });

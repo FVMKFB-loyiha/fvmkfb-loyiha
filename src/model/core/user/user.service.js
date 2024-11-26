@@ -14,75 +14,22 @@ import {
 } from "../../validator/userValidator.js";
 import tasksModel from "../task/task.model.js";
 
+// rasm saqlanadigan direktoriya ✅
+const uploadDir = "../uploads/userphotos";
+
+// register user service toliq emas 🔰
 export async function registerUser(req, res) {
-  try {
-    const newUser = req.body;
-    const { error } = registerUserValidator.validate(newUser);
-    if (error) {
-      return res.status(400).send(error.details[0].message);
-    }
+   
 
-    const existingLogin = await findUserByEmail(newUser.email);
-    if (existingLogin) {
-      return res.status(400).send("User email allaqachon ro'yxatdan o'tgan.");
-    }
-
-    if (req.file) {
-      newUser.photo = req.file.destination + req.file.filename;
-    }
-    let existUsers = readFromFile("photo.json");
-
-    if (!existUsers) {
-      existUsers = [];
-      writeToFile("photo.json", [newUser]);
-      console.log("foydalanuvchi muvaffaqiyatli ro'yxatdan o'tdi");
-    } else {
-      existUsers.push(newUser);
-      writeToFile("photo.json", existUsers);
-    }
-
-    const hashedPassword = await bcrypt.hash(newUser.password, 10);
-    const result = await userModel.create({
-      ...newUser,
-      password: hashedPassword,
-    });
-
-    res.status(200).send(result);
-  } catch (err) {
-    console.log("xatoliiiik", err);
-    res
-      .status(500)
-      .send(
-        "Foydalanuvchini ro'yxatdan o'tkazishda xatolik yuz berdi: " +
-          err.message
-      );
-  }
-}
-
-export function writeToFile(address, data) {
-  fileSystem.writeFileSync(address, JSON.stringify(data));
-}
-
-export function readFromFile(address) {
-  try {
-    const existFile = fileSystem.existsSync(address);
-    if (!existFile) return null; // Fayl topilmasa null qaytaramiz
-
-    const stringData = fileSystem.readFileSync(address);
-    const data = JSON.parse(stringData);
-    return data;
-  } catch (error) {
-    console.error("Fayldan o'qishda xatolik:", error);
-    return null; // Xatolik bo'lsa null qaytaramiz
-  }
-}
 
 function findUserByEmail(email) {
   return userModel.findOne({
     where: { email: email },
   });
 }
+}
 
+// hali to'liq emas 🔰
 export async function loginUser(req, res) {
   try {
     const { email, password } = req.body;
@@ -193,7 +140,7 @@ export async function getAllUser(req, res) {
       attributes: [
         "fullname",
         "role",
-        "tugilgan_sana",
+        "birth_date",
         "bolim",
         "lavozim",
         "talim_muassasasi",

@@ -1,9 +1,12 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-// Multer saqlash konfiguratsiyasi
-const uploadDir = "../uploads/userphotos";
+import { v4 as uuidv4 } from "uuid"; // UUID moduli
 
+// Multer saqlash konfiguratsiyasi
+const uploadDir = "./uploads/userphotos"; // Katalogni hozirgi ishchi papkada joylashtiramiz
+
+// Agar 'uploads/userphotos' papkasi mavjud bo'lmasa, uni yaratish
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true }); // direktiv yo'q bo'lsa, yaratib beradi
 }
@@ -11,19 +14,15 @@ if (!fs.existsSync(uploadDir)) {
 const storage = multer.diskStorage({
   destination: (req, file, callback) => {
     if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+      fs.mkdirSync(uploadDir, { recursive: true }); // Agar yo'l mavjud bo'lmasa, yaratib beradi
     }
-    callback(null, uploadDir);
+    callback(null, uploadDir); // Faylni yuklash uchun yo'nalish
   },
   filename: function (req, file, callback) {
-    callback(
-      null,
-      file.fieldname + "-" + Date.now() + path.extname(file.originalname)
-    );
+    const extname = path.extname(file.originalname); // Fayl kengaytmasini olish
+    callback(null, uuidv4() + extname); // UUID bilan noyob nom yaratish
   },
 });
-
-const upload = multer({ storage });
 
 // Fayl filtrini aniqlash
 const fileFilter = (req, file, callback) => {
@@ -52,13 +51,13 @@ export function profilePicMiddleware(req, res, next) {
     if (err) {
       if (err instanceof multer.MulterError) {
         if (err.code === "LIMIT_FILE_SIZE") {
-          return res.status(400).send("Fayl hajmi 2MB dan oshmasligi kerak!");
+          return res.status(400).send("Fayl hajmi 3MB dan oshmasligi kerak!");
         }
       } else if (err) {
         console.error("Fayl yuklashda hatolik: ", err.message);
         return res.status(400).send(err.message);
       }
     }
-    next();
+    next(); // Agar hech qanday xatolik bo'lmasa, keyingi middlewarega o'tish
   });
 }
