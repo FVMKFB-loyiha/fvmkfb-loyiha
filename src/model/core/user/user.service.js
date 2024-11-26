@@ -13,20 +13,62 @@ import {
   updateUserValidator,
 } from "../../validator/userValidator.js";
 import tasksModel from "../task/task.model.js";
+import eduModel from "./userEdu.model.js";
+import { profilePicMiddleware } from "../../../middlewares/rasmYuklash.js";
 
 // rasm saqlanadigan direktoriya ✅
 const uploadDir = "../uploads/userphotos";
 
 // register user service toliq emas 🔰
 export async function registerUser(req, res) {
-   
+  // Fayl yuklashda foydalaniladigan middleware
+  profilePicMiddleware(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ message: "Fayl yuklashda xatolik: " + err.message });
+    }
+    try {
+      const { fullname, email, birth_date, department, position, phone, edu } = req.body;
 
+      // Fayl nomini olish (agar fayl yuklansa)
+      let picture = req.file ? req.file.filename : "default-ava.jpg";  // Agar fayl yuklanmasa, default rasm
 
-function findUserByEmail(email) {
-  return userModel.findOne({
-    where: { email: email },
+      // Foydalanuvchi ma'lumotlarini yaratish
+      const user = await userModel.create({
+        fullname,
+        email,
+        birth_date,
+        picture,
+        file: req.file ? req.file.path : null, 
+        department,
+        position,
+        phone,
+      });
+
+      // Agar 'edu' malumotlari mavjud bo'lsa, ularni saqlash
+      if (edu && Array.isArray(edu)) {
+        await Promise.all(
+          edu.map(async (eduItem) => {
+            await eduModel.create({
+              edu_name: eduItem.edu_name,
+              study_year: eduItem.study_year,
+              degree: eduItem.degree,
+              specialty: eduItem.specialty,
+              user_id: user.user_id, 
+            });
+          })
+        );
+      }
+
+      // Yangi foydalanuvchi yaratildi va muvaffaqiyatli ro'yxatdan o'tdi
+      return res.status(201).json({
+        message: "Foydalanuvchi muvaffaqiyatli ro'yxatdan o'tdi",
+        user, // Yangi foydalanuvchi haqida ma'lumot
+      });
+    } catch (err) {
+      console.log("Fayl yuklashda xatolik => ", err);
+      return res.status(500).json({ message: "Foydalanuvchi ro'yxatdan o'tkazishda xatolik yuz berdi", err });
+    }
   });
-}
 }
 
 // hali to'liq emas 🔰

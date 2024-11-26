@@ -1,5 +1,6 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../../../common/database/sequelize.js";
+import { allow } from "joi";
 
 const userModel = sequelize.define(
   "users",
@@ -21,7 +22,6 @@ const userModel = sequelize.define(
       allowNull: false,
     },
 
-
     birth_date: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -33,15 +33,16 @@ const userModel = sequelize.define(
       allowNull: false,
     },
 
-    file: {
+    file:{
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull:true
     },
 
     department: {
       type: DataTypes.STRING,
       allowNull: false,
     },
+
 
     position: {
       type: DataTypes.STRING,
