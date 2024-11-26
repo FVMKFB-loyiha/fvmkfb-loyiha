@@ -1,3 +1,6 @@
+import { DataTypes } from "sequelize";
+import sequelize from "../../../common/database/sequelize.js";
+
 const eduModel = sequelize.define("eduinfo", {
     edu_id: {
       type: DataTypes.INTEGER,

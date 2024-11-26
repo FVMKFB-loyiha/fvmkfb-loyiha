@@ -1,20 +1,20 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { v4 as uuidv4 } from "uuid"; // UUID moduli
+import { v4 as uuidv4 } from "uuid";
 
 // Multer saqlash konfiguratsiyasi
 const uploadDir = "./uploads/userphotos"; // Katalogni hozirgi ishchi papkada joylashtiramiz
 
 // Agar 'uploads/userphotos' papkasi mavjud bo'lmasa, uni yaratish
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true }); // direktiv yo'q bo'lsa, yaratib beradi
+  fs.mkdirSync(uploadDir, { recursive: true }); // Agar yo'l mavjud bo'lmasa, yaratib beradi
 }
 
 const storage = multer.diskStorage({
   destination: (req, file, callback) => {
     if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true }); // Agar yo'l mavjud bo'lmasa, yaratib beradi
+      fs.mkdirSync(uploadDir, { recursive: true });
     }
     callback(null, uploadDir); // Faylni yuklash uchun yo'nalish
   },
@@ -30,9 +30,9 @@ const fileFilter = (req, file, callback) => {
   const extname = path.extname(file.originalname).toLowerCase();
 
   if (allowedFileTypes.includes(extname)) {
-    callback(null, true);
+    callback(null, true); // Ruxsat berilgan fayl turlari
   } else {
-    callback(new Error("Faqat .jpg, .jpeg, va .png fayllar qabul qilinadi!"));
+    callback(new Error("Faqat .jpg, .jpeg, va .png fayllar qabul qilinadi!"), false);
   }
 };
 
@@ -43,21 +43,23 @@ const picDownload = multer({
     fileSize: 3 * 1024 * 1024, // Maksimal fayl hajmi: 3MB
   },
   fileFilter,
-}).single("photo");
+}).single("picture",1); // "picture" - frontendda fayl inputining name atributi
 
 // Middleware funksiyasi
 export function profilePicMiddleware(req, res, next) {
+  // `picDownload` middleware'ini asinxron ishlatish uchun
   picDownload(req, res, (err) => {
     if (err) {
-      if (err instanceof multer.MulterError) {
-        if (err.code === "LIMIT_FILE_SIZE") {
-          return res.status(400).send("Fayl hajmi 3MB dan oshmasligi kerak!");
-        }
-      } else if (err) {
-        console.error("Fayl yuklashda hatolik: ", err.message);
-        return res.status(400).send(err.message);
-      }
+      console.error(err);
+      // Agar xatolik bo'lsa, xatolikni qaytarish
+      return res.status(400).json({
+        message: "Fayl yuklashda hatolik",
+        error: err,
+      });
     }
-    next(); // Agar hech qanday xatolik bo'lmasa, keyingi middlewarega o'tish
+
+    // Agar fayl muvaffaqiyatli yuklansa, keyingi middleware'ga o'tish
+    console.log("Fayl muvaffaqiyatli yuklandi:", req.file);
+    next(); // Keyingi middlewarega o'tish
   });
 }

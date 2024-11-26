@@ -1,4 +1,4 @@
-import express from "express";
+import express, { urlencoded } from "express";
 import getDotEnv from "./common/config/dotenv.config.js";
 import connectToDb from "./common/database/database.js";
 import {
@@ -67,6 +67,7 @@ io.on("connection", (socket) => {
 
 async function init() {
   app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
 
   await connectToDb();
   initRoutes();

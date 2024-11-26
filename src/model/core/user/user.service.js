@@ -1,13 +1,12 @@
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import getDotEnv from "../../../common/config/dotenv.config.js";
 // import searchUsers from "../../../common/utils/search.js";
-import fileSystem from "fs";
+// import fileSystem from "fs";
 import { Op } from "sequelize";
 import userModel from "./user.model.js";
 
 import {
-  getUserValidator,
+  // getUserValidator,
   loginUserValidator,
   registerUserValidator,
   updateUserValidator,
@@ -21,55 +20,56 @@ const uploadDir = "../uploads/userphotos";
 
 // register user service toliq emas 🔰
 export async function registerUser(req, res) {
-  // Fayl yuklashda foydalaniladigan middleware
-  profilePicMiddleware(req, res, async (err) => {
-    if (err) {
-      return res.status(400).json({ message: "Fayl yuklashda xatolik: " + err.message });
+  console.log(req.body);
+  console.log(req.file);
+  try {
+    const { fullname, email, birth_date, department, position, phone, edu } = req.body;
+
+    let picture = req.file ? req.file.filename : "default-ava.jpg";
+    let filePath = req.file ? req.file.path : null;
+
+    let eduParse = JSON.parse(edu)
+
+    // Foydalanuvchi ma'lumotlarini yaratish
+    const user = await userModel.create({
+      fullname,
+      email,
+      birth_date,
+      picture,
+      file: filePath,
+      department,
+      position,
+      phone,
+    });
+
+    // Edu ma'lumotlarini tekshirish
+    if (edu && Array.isArray(eduParse)) {
+      console.log("edu array #####");
+      await Promise.all(
+        eduParse.map(async (eduItem) => {
+          await eduModel.create({
+            edu_name: eduItem.edu_name,
+            study_year: eduItem.study_year,
+            degree: eduItem.degree,
+            specialty: eduItem.specialty,
+            user_id: user.user_id, // Foydalanuvchi IDsi
+          });
+        })
+      );
     }
-    try {
-      const { fullname, email, birth_date, department, position, phone, edu } = req.body;
 
-      // Fayl nomini olish (agar fayl yuklansa)
-      let picture = req.file ? req.file.filename : "default-ava.jpg";  // Agar fayl yuklanmasa, default rasm
-
-      // Foydalanuvchi ma'lumotlarini yaratish
-      const user = await userModel.create({
-        fullname,
-        email,
-        birth_date,
-        picture,
-        file: req.file ? req.file.path : null, 
-        department,
-        position,
-        phone,
-      });
-
-      // Agar 'edu' malumotlari mavjud bo'lsa, ularni saqlash
-      if (edu && Array.isArray(edu)) {
-        await Promise.all(
-          edu.map(async (eduItem) => {
-            await eduModel.create({
-              edu_name: eduItem.edu_name,
-              study_year: eduItem.study_year,
-              degree: eduItem.degree,
-              specialty: eduItem.specialty,
-              user_id: user.user_id, 
-            });
-          })
-        );
-      }
-
-      // Yangi foydalanuvchi yaratildi va muvaffaqiyatli ro'yxatdan o'tdi
-      return res.status(201).json({
-        message: "Foydalanuvchi muvaffaqiyatli ro'yxatdan o'tdi",
-        user, // Yangi foydalanuvchi haqida ma'lumot
-      });
-    } catch (err) {
-      console.log("Fayl yuklashda xatolik => ", err);
-      return res.status(500).json({ message: "Foydalanuvchi ro'yxatdan o'tkazishda xatolik yuz berdi", err });
-    }
-  });
+    res.status(201).json({
+      message: "Foydalanuvchi muvaffaqiyatli ro'yxatdan o'tdi",
+      user, // Yangi foydalanuvchi haqida ma'lumot
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Foydalanuvchi ro'yxatdan o'tkazishda xatolik yuz berdi",
+      error: err.message, // Aniqroq xatolik ma'lumoti
+    });
+  }
 }
+
 
 // hali to'liq emas 🔰
 export async function loginUser(req, res) {
@@ -217,10 +217,10 @@ export async function getAllUser(req, res) {
 export async function getUser(req, res) {
   try {
     const { id } = req.params;
-    const { error } = getUserValidator.validate(req.params);
-    if (error) {
-      return res.status(400).send(error.details[0].message);
-    }
+    // const { error } = getUserValidator.validate(req.params);
+    // if (error) {
+    //   return res.status(400).send(error.details[0].message);
+    // }
 
     const result = await userModel.findByPk(id);
 
@@ -242,10 +242,10 @@ export async function updateUser(req, res) {
   try {
     const { id } = req.params;
     const updatedUser = req.body;
-    const { error: idError } = getUserValidator.validate(req.params);
-    if (idError) {
-      return res.status(400).send(idError.details[0].message);
-    }
+    // const { error: idError } = getUserValidator.validate(req.params);
+    // if (idError) {
+    //   return res.status(400).send(idError.details[0].message);
+    // }
     const { error: bodyError } = updateUserValidator.validate(req.body);
     if (bodyError) {
       return res.status(400).send(bodyError.details[0].message);
@@ -265,10 +265,10 @@ export async function updateUser(req, res) {
 export async function deleteUser(req, res) {
   try {
     const { id } = req.params;
-    const { error } = getUserValidator.validate(req.params);
-    if (error) {
-      return res.status(400).send(error.details[0].message);
-    }
+    // const { error } = getUserValidator.validate(req.params);
+    // if (error) {
+    //   return res.status(400).send(error.details[0].message);
+    // }
     const result = await userModel.destroy({ where: { user_id: id } });
     res.status(200).send({ result });
   } catch (err) {

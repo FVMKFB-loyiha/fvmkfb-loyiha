@@ -1,3 +1,7 @@
+import pkg from 'pg';
+const { Client } = pkg;
+import getDotEnv from "../config/dotenv.config.js";
+
 export const client = new Client({
     user: getDotEnv("DATABASE_USER"),
     host: getDotEnv("DATABASE_HOST"),

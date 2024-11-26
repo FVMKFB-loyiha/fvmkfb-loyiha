@@ -5,7 +5,7 @@ export const registerUserValidator = Joi.object({
   email: Joi.string().required(),
   role: Joi.string().required(),
   password: Joi.string().required().min(9),
-  birth_date: Joi.string().required(),
+  tugilgan_sana: Joi.string().required(),
   bolim: Joi.string().required(),
   // file: Joi.string(),
   lavozim: Joi.string().required(),
@@ -21,18 +21,18 @@ export const loginUserValidator = Joi.object({
   password: Joi.string().min(9).required(),
 });
 
-export const getUserValidator = Joi.object({
-  id: Joi.string()
-    .pattern(/^[0-9]+$/)
-    .required(),
-});
+// export const getUserValidator = Joi.object({
+//   id: Joi.string()
+//     .pattern(/^[0-9]+$/)
+//     .required(),
+// });
 
 export const updateUserValidator = Joi.object({
   fullname: Joi.string().required(),
   email: Joi.string().required(),
   role: Joi.string().required(),
   password: Joi.string().required().min(9),
-  birth_date: Joi.string().required(),
+  tugilgan_sana: Joi.string().required(),
   bolim: Joi.string().required(),
   // file: Joi.string(),
   lavozim: Joi.string().required(),

@@ -1,6 +1,5 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../../../common/database/sequelize.js";
-import { allow } from "joi";
 
 const userModel = sequelize.define(
   "users",

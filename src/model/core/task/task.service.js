@@ -4,7 +4,7 @@ import {
   updateTaskValidator,
 } from "../../validator/taskValidator.js";
 import userModel from "../user/user.model.js";
-import { readFromFile, writeToFile } from "../user/user.service.js";
+// import { readFromFile, writeToFile } from "../user/user.service.js";
 import tasksModel from "./task.model.js";
 
 export async function addTask(req, res) {
