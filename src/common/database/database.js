@@ -7,7 +7,7 @@ async function connectToDb() {
     console.log("connected to database");
     await setupModels();
 
-    await sequelize.sync({ logging: false, force: true});
+    await sequelize.sync({ logging: false});
     console.log("synced to the base");
   } catch (err) {
     console.log("there was an error connecting to the database" + err.message);

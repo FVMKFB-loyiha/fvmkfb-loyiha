@@ -21,79 +21,6 @@ const uploadDir = "../uploads/userphotos";
 // register user service toliq emas 🔰
 export async function registerUser(req, res) {
   try {
-<<<<<<< HEAD
-    const {
-      name,
-      lastname,
-      email,
-      password,
-      role,
-      tugilgan_sana,
-      bolim,
-      lavozim,
-      talim_muassasasi,
-      malumoti,
-      talim_davri,
-      mutahasisligi,
-      phone,
-    } = req.body;
-
-    profileImage = req.file;
-
-    // Valdiatsiya qilish
-    const { error } = registerUserValidator.validate(newUser);
-    if (error) {
-      return res.status(400).send(error.details[0].message);
-    }
-
-    if (
-      !name ||
-      !lastname ||
-      !email ||
-      !password ||
-      !profileImage ||
-      !role ||
-      !tugilgan_sana ||
-      !bolim ||
-      !lavozim ||
-      !talim_muassasasi ||
-      !malumoti ||
-      !talim_davri ||
-      !mutahasisligi ||
-      !phone 
-    ) {
-      return res.status(400).json({ message: "Hamma maydonlarni to'ldiring" });
-    }
-
-    // Emailni tekshirish
-    const existingLogin = await findUserByEmail(newUser.email);
-    if (existingLogin) {
-      return res.status(400).send("User email allaqachon ro'yxatdan o'tgan.");
-    }
-
-    // Agar rasm yuklangan bo'lsa, yo'lni o'rnating
-    if (req.file) {
-      newUser.photo = req.file.destination + req.file.filename;
-    }
-
-    // Parolni xeshlash
-    const hashedPassword = await bcrypt.hash(newUser.password, 10);
-
-    // Foydalanuvchini bazaga saqlash
-    const result = await userModel.create({
-      ...newUser,
-      password: hashedPassword,
-    });
-
-    res.status(200).send(result);
-  } catch (err) {
-    console.log("xatolik:", err);
-    res
-      .status(500)
-      .send(
-        "Foydalanuvchini ro'yxatdan o'tkazishda xatolik yuz berdi: " +
-          err.message
-=======
     const { fullname, email, birth_date, department, position, phone, edu } = req.body;
 
     let picture = req.file ? req.file.filename : "default-ava.jpg";
@@ -125,7 +52,6 @@ export async function registerUser(req, res) {
             user_id: user.user_id, // Foydalanuvchi IDsi
           });
         })
->>>>>>> b76790642a863fe0831b7395bb5aa5b7d5ba6b1c
       );
     }
 
@@ -140,103 +66,6 @@ export async function registerUser(req, res) {
     });
   }
 }
-
-<<<<<<< HEAD
-// export async function registerUser(req, res) {
-try {
-  const newUser = req.body;
-  const { error } = registerUserValidator.validate(newUser);
-  if (error) {
-    return res.status(400).send(error.details[0].message);
-  }
-
-  const existingLogin = await findUserByEmail(newUser.email);
-  if (existingLogin) {
-    return res.status(400).send("User email allaqachon ro'yxatdan o'tgan.");
-  }
-
-  if (req.file) {
-    newUser.photo = req.file.destination + req.file.filename;
-  }
-  let existUsers = readFromFile("photo.json");
-
-  if (!existUsers) {
-    existUsers = [];
-    writeToFile("photo.json", [newUser]);
-    console.log("foydalanuvchi muvaffaqiyatli ro'yxatdan o'tdi");
-  } else {
-    existUsers.push(newUser);
-    writeToFile("photo.json", existUsers);
-  }
-
-  const hashedPassword = await bcrypt.hash(newUser.password, 10);
-  const result = await userModel.create({
-    ...newUser,
-    password: hashedPassword,
-  });
-
-  res.status(200).send(result);
-} catch (err) {
-  console.log("xatoliiiik", err);
-  res
-    .status(500)
-    .send(
-      "Foydalanuvchini ro'yxatdan o'tkazishda xatolik yuz berdi: " + err.message
-    );
-}
-// }
-
-// const registerUser = async (req, res) => {
-//     try {
-//         const { name, email } = req.body;
-//         const profileImage = req.file; // Multer orqali kelgan fayl
-
-//         if (!name || !email || !profileImage) {
-//             return res.status(400).json({ message: 'Hamma maydonlarni to\'ldiring' });
-//         }
-
-//         // Faylning URL manzilini olish
-//         const profileImageUrl = `/uploads/${profileImage.filename}`;
-
-//         // Ma'lumotlar bazasiga foydalanuvchini qo'shish
-//         const newUser = await User.create({
-//             name,
-//             email,
-//             profile_image_url: profileImageUrl,
-//         });
-
-//         res.status(201).json({ message: 'Foydalanuvchi muvaffaqiyatli qo\'shildi', user: newUser });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ message: 'Xatolik yuz berdi' });
-//     }
-// };
-
-export function writeToFile(address, data) {
-  fileSystem.writeFileSync(address, JSON.stringify(data));
-}
-
-export function readFromFile(address) {
-  try {
-    const existFile = fileSystem.existsSync(address);
-    if (!existFile) return null; // Fayl topilmasa null qaytaramiz
-
-    const stringData = fileSystem.readFileSync(address);
-    const data = JSON.parse(stringData);
-    return data;
-  } catch (error) {
-    console.error("Fayldan o'qishda xatolik:", error);
-    return null; // Xatolik bo'lsa null qaytaramiz
-  }
-}
-
-function findUserByEmail(email) {
-  return userModel.findOne({
-    where: { email: email },
-  });
-}
-=======
->>>>>>> b76790642a863fe0831b7395bb5aa5b7d5ba6b1c
 
 // hali to'liq emas 🔰
 export async function loginUser(req, res) {
@@ -349,14 +178,12 @@ export async function getAllUser(req, res) {
       offset,
       attributes: [
         "fullname",
-        "role",
+        "email",
         "birth_date",
-        "bolim",
-        "lavozim",
-        "talim_muassasasi",
-        "malumoti",
-        "talim_davri",
-        "mutaxasisligi",
+        "picture",
+        "file",
+        "department",
+        "position",
         "phone",
       ],
       include: {

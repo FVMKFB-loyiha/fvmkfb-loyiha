@@ -26,7 +26,7 @@ const userModel = sequelize.define(
       allowNull: false,
     },
 
-
+    
     picture: {
       type: DataTypes.STRING,
       allowNull: false,
