@@ -17,6 +17,7 @@ import { Server } from "socket.io";
 import NotificationRouter from "./model/routes/notification.router.js";
 import { fileURLToPath } from "url";
 import { client } from "./common/database/config.js";
+import cookieParser from "cookie-parser";
 const app = express();
 const server = http.createServer(app);
 initializeSocket(server);
@@ -68,6 +69,7 @@ io.on("connection", (socket) => {
 async function init() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+  app.use(cookieParser());
 
   await connectToDb();
   initRoutes();

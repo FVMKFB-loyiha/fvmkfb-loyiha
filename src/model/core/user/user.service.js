@@ -15,18 +15,30 @@ import tasksModel from "../task/task.model.js";
 import eduModel from "./userEdu.model.js";
 // import { profilePicMiddleware } from "../../../middlewares/rasmYuklash.js";
 
-// rasm saqlanadigan direktoriya ✅
+// rasm saqlanadigan direktoriya
 const uploadDir = "../uploads/userphotos";
 
-// register user service toliq emas 🔰
+// functions
+export const findUserByEmail = async function (email) {
+  return await userModel.findOne({
+    where: { email },
+  });
+};
+
+function generateToken(data) {
+  return jwt.sign(data, getDotEnv("JWT_SECRET"), { expiresIn: "1d" });
+}
+
+// register user service ✅
 export async function registerUser(req, res) {
   try {
-    const { fullname, email, birth_date, department, position, phone, edu } = req.body;
+    const { fullname, email, birth_date, department, position, phone, edu } =
+      req.body;
 
     let picture = req.file ? req.file.filename : "default-ava.jpg";
     let filePath = req.file ? req.file.path : null;
 
-    let eduParse = JSON.parse(edu)
+    let eduParse = JSON.parse(edu);
 
     // Foydalanuvchi ma'lumotlarini yaratish
     const user = await userModel.create({
@@ -67,8 +79,7 @@ export async function registerUser(req, res) {
   }
 }
 
-
-// hali to'liq emas 🔰
+// login user ✅
 export async function loginUser(req, res) {
   try {
     const { email, phone } = req.body;
@@ -84,11 +95,19 @@ export async function loginUser(req, res) {
     }
 
     if (existingUser.email === email && existingUser.phone === phone) {
-      res.status(200).send({
-        message: "siz tizimga muvaffaqiyatli kirdiz",
-        token: generateToken({ email: existingUser.email, role:"hodim" }),
+      const token = generateToken({ email: existingUser.email, role: "hodim" });
+
+      // Cookie ni sozlash
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 24 * 60 * 60 * 1000, // 24 soat
       });
-      
+
+      res.status(200).json({
+        message: "siz tizimga muvaffaqiyatli kirdiz",
+        token,
+      });
     } else {
       res.send("parol notog'ri");
     }
@@ -98,11 +117,7 @@ export async function loginUser(req, res) {
   }
 }
 
-function generateToken(data) {
-  return jwt.sign(data, getDotEnv("JWT_SECRET"), { expiresIn: "1d" });
-}
-
-// sorting users ✅
+// sorting users 🌋
 export async function searchUserController(req, res) {
   try {
     const { searchTerm, fullname, bolim, lavozim, malumoti, email, createdAt } =
@@ -168,7 +183,7 @@ export async function searchUserController(req, res) {
   }
 }
 
-// pagination ✅
+// pagination 🌋
 export async function getAllUser(req, res) {
   try {
     const { page = 1, limit = 10 } = req.query;
@@ -221,12 +236,13 @@ export async function getUser(req, res) {
     }
 
     const result = await userModel.findByPk(id, {
-      include: [{
-        model: eduModel, // Specify the related model
-        required: false,  // Whether to include users even if they don't have education records
-      }]
+      include: [
+        {
+          model: eduModel, // Specify the related model
+          required: false, // Whether to include users even if they don't have education records
+        },
+      ],
     });
-    
 
     if (!result) {
       return res.status(401).send("Bunday ID'lik foydalanuchi topilmadi!");
@@ -241,15 +257,15 @@ export async function getUser(req, res) {
   }
 }
 
-// hali to'liq emas 🔰
+// update user hali to'liq emas 🌋
 export async function updateUser(req, res) {
   try {
     const { id } = req.params;
     const updatedUser = req.body;
-    // const { error: idError } = getUserValidator.validate(req.params);
-    // if (idError) {
-    //   return res.status(400).send(idError.details[0].message);
-    // }
+    const { error: idError } = getUserValidator.validate(req.params);
+    if (idError) {
+      return res.status(400).send(idError.details[0].message);
+    }
     const { error: bodyError } = updateUserValidator.validate(req.body);
     if (bodyError) {
       return res.status(400).send(bodyError.details[0].message);
