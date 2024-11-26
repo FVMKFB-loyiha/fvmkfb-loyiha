@@ -16,32 +16,64 @@ import tasksModel from "../task/task.model.js";
 
 export async function registerUser(req, res) {
   try {
-    const newUser = req.body;
+    const {
+      name,
+      lastname,
+      email,
+      password,
+      role,
+      tugilgan_sana,
+      bolim,
+      lavozim,
+      talim_muassasasi,
+      malumoti,
+      talim_davri,
+      mutahasisligi,
+      phone,
+    } = req.body;
+
+    profileImage = req.file;
+
+    // Valdiatsiya qilish
     const { error } = registerUserValidator.validate(newUser);
     if (error) {
       return res.status(400).send(error.details[0].message);
     }
 
+    if (
+      !name ||
+      !lastname ||
+      !email ||
+      !password ||
+      !profileImage ||
+      !role ||
+      !tugilgan_sana ||
+      !bolim ||
+      !lavozim ||
+      !talim_muassasasi ||
+      !malumoti ||
+      !talim_davri ||
+      !mutahasisligi ||
+      !phone 
+    ) {
+      return res.status(400).json({ message: "Hamma maydonlarni to'ldiring" });
+    }
+
+    // Emailni tekshirish
     const existingLogin = await findUserByEmail(newUser.email);
     if (existingLogin) {
       return res.status(400).send("User email allaqachon ro'yxatdan o'tgan.");
     }
 
+    // Agar rasm yuklangan bo'lsa, yo'lni o'rnating
     if (req.file) {
       newUser.photo = req.file.destination + req.file.filename;
     }
-    let existUsers = readFromFile("photo.json");
 
-    if (!existUsers) {
-      existUsers = [];
-      writeToFile("photo.json", [newUser]);
-      console.log("foydalanuvchi muvaffaqiyatli ro'yxatdan o'tdi");
-    } else {
-      existUsers.push(newUser);
-      writeToFile("photo.json", existUsers);
-    }
-
+    // Parolni xeshlash
     const hashedPassword = await bcrypt.hash(newUser.password, 10);
+
+    // Foydalanuvchini bazaga saqlash
     const result = await userModel.create({
       ...newUser,
       password: hashedPassword,
@@ -49,7 +81,7 @@ export async function registerUser(req, res) {
 
     res.status(200).send(result);
   } catch (err) {
-    console.log("xatoliiiik", err);
+    console.log("xatolik:", err);
     res
       .status(500)
       .send(
@@ -58,6 +90,76 @@ export async function registerUser(req, res) {
       );
   }
 }
+
+// export async function registerUser(req, res) {
+try {
+  const newUser = req.body;
+  const { error } = registerUserValidator.validate(newUser);
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
+
+  const existingLogin = await findUserByEmail(newUser.email);
+  if (existingLogin) {
+    return res.status(400).send("User email allaqachon ro'yxatdan o'tgan.");
+  }
+
+  if (req.file) {
+    newUser.photo = req.file.destination + req.file.filename;
+  }
+  let existUsers = readFromFile("photo.json");
+
+  if (!existUsers) {
+    existUsers = [];
+    writeToFile("photo.json", [newUser]);
+    console.log("foydalanuvchi muvaffaqiyatli ro'yxatdan o'tdi");
+  } else {
+    existUsers.push(newUser);
+    writeToFile("photo.json", existUsers);
+  }
+
+  const hashedPassword = await bcrypt.hash(newUser.password, 10);
+  const result = await userModel.create({
+    ...newUser,
+    password: hashedPassword,
+  });
+
+  res.status(200).send(result);
+} catch (err) {
+  console.log("xatoliiiik", err);
+  res
+    .status(500)
+    .send(
+      "Foydalanuvchini ro'yxatdan o'tkazishda xatolik yuz berdi: " + err.message
+    );
+}
+// }
+
+// const registerUser = async (req, res) => {
+//     try {
+//         const { name, email } = req.body;
+//         const profileImage = req.file; // Multer orqali kelgan fayl
+
+//         if (!name || !email || !profileImage) {
+//             return res.status(400).json({ message: 'Hamma maydonlarni to\'ldiring' });
+//         }
+
+//         // Faylning URL manzilini olish
+//         const profileImageUrl = `/uploads/${profileImage.filename}`;
+
+//         // Ma'lumotlar bazasiga foydalanuvchini qo'shish
+//         const newUser = await User.create({
+//             name,
+//             email,
+//             profile_image_url: profileImageUrl,
+//         });
+
+//         res.status(201).json({ message: 'Foydalanuvchi muvaffaqiyatli qo\'shildi', user: newUser });
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ message: 'Xatolik yuz berdi' });
+//     }
+// };
 
 export function writeToFile(address, data) {
   fileSystem.writeFileSync(address, JSON.stringify(data));

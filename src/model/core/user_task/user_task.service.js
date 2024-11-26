@@ -3,7 +3,7 @@ import {
   getUser_taskValidator,
   updateUser_taskValidator,
 } from "../../validator/user_taskValidator.js";
-import user_taskModel from "./user_task.model.js";
+import userTaskModel from "./user_task.model.js";
 
 export async function addUserTask(req, res) {
   try {
@@ -12,7 +12,7 @@ export async function addUserTask(req, res) {
     if (error) {
       return res.status(400).send(error.details[0].message);
     }
-    const result = await user_taskModel.create(newUserTask);
+    const result = await userTaskModel.create(newUserTask);
     res.status(201).send(result);
   } catch (err) {
     res.status(500).send("Yangi xona qo'shishda xatolik bo'ldi" + err.message);
@@ -21,7 +21,7 @@ export async function addUserTask(req, res) {
 
 export async function getAllUserTask(req, res) {
   try {
-    const result = await user_taskModel.findAll();
+    const result = await userTaskModel.findAll();
     res.status(200).send(result);
   } catch (err) {
     res
@@ -50,7 +50,7 @@ export async function updateUserTask(req, res) {
     if (userRole !== "admin") {
       return res.status(403).send("Sizga buni amalga oshirishga ruxsat yo'q!");
     }
-    const result = await user_taskModel.update(updatedTask, { where: { id } });
+    const result = await userTaskModel.update(updatedTask, { where: { id } });
     console.log("result", result);
 
     if (result[0] === 0) {
@@ -72,7 +72,7 @@ export async function getUserTask(req, res) {
     if (error) {
       return res.status(400).send(error.details[0].message);
     }
-    const result = await user_taskModel.findByPk(id);
+    const result = await userTaskModel.findByPk(id);
 
     if (!result) {
       return res.status(404).send("Bizda xali bunday xona mavjud emas!");
@@ -96,7 +96,7 @@ export async function deleteUserTask(req, res) {
       return res.status(403).send("Sizga buni amalga oshirishga ruxsat yo'q!");
     }
 
-    const result = await user_taskModel.destroy({
+    const result = await userTaskModel.destroy({
       where: { id: parseInt(id) },
     });
 
