@@ -6,22 +6,20 @@ import { Op } from "sequelize";
 import userModel from "./user.model.js";
 
 import {
-  // getUserValidator,
+  getUserValidator,
   loginUserValidator,
   registerUserValidator,
   updateUserValidator,
 } from "../../validator/userValidator.js";
 import tasksModel from "../task/task.model.js";
 import eduModel from "./userEdu.model.js";
-import { profilePicMiddleware } from "../../../middlewares/rasmYuklash.js";
+// import { profilePicMiddleware } from "../../../middlewares/rasmYuklash.js";
 
 // rasm saqlanadigan direktoriya ✅
 const uploadDir = "../uploads/userphotos";
 
 // register user service toliq emas 🔰
 export async function registerUser(req, res) {
-  console.log(req.body);
-  console.log(req.file);
   try {
     const { fullname, email, birth_date, department, position, phone, edu } = req.body;
 
@@ -44,7 +42,6 @@ export async function registerUser(req, res) {
 
     // Edu ma'lumotlarini tekshirish
     if (edu && Array.isArray(eduParse)) {
-      console.log("edu array #####");
       await Promise.all(
         eduParse.map(async (eduItem) => {
           await eduModel.create({
@@ -74,7 +71,7 @@ export async function registerUser(req, res) {
 // hali to'liq emas 🔰
 export async function loginUser(req, res) {
   try {
-    const { email, password } = req.body;
+    const { email, phone } = req.body;
     const { error } = loginUserValidator.validate(req.body);
     if (error) {
       return res.status(400).send(error.details[0].message);
@@ -86,11 +83,12 @@ export async function loginUser(req, res) {
       return res.status(404).send("Foydalanuvchi topilmadi.");
     }
 
-    if (existingUser.email === email && existingUser.password === password) {
+    if (existingUser.email === email && existingUser.phone === phone) {
       res.status(200).send({
         message: "siz tizimga muvaffaqiyatli kirdiz",
-        token: generateToken({ email: existingUser.email }),
+        token: generateToken({ email: existingUser.email, role:"hodim" }),
       });
+      
     } else {
       res.send("parol notog'ri");
     }
@@ -217,15 +215,21 @@ export async function getAllUser(req, res) {
 export async function getUser(req, res) {
   try {
     const { id } = req.params;
-    // const { error } = getUserValidator.validate(req.params);
-    // if (error) {
-    //   return res.status(400).send(error.details[0].message);
-    // }
+    const { error } = getUserValidator.validate(req.params);
+    if (error) {
+      return res.status(400).send(error.details[0].message);
+    }
 
-    const result = await userModel.findByPk(id);
+    const result = await userModel.findByPk(id, {
+      include: [{
+        model: eduModel, // Specify the related model
+        required: false,  // Whether to include users even if they don't have education records
+      }]
+    });
+    
 
     if (!result) {
-      res.status(401).send("Bunday ID'lik foydalanuchi topilmadi!");
+      return res.status(401).send("Bunday ID'lik foydalanuchi topilmadi!");
     }
 
     res.status(200).send(result);
@@ -265,10 +269,10 @@ export async function updateUser(req, res) {
 export async function deleteUser(req, res) {
   try {
     const { id } = req.params;
-    // const { error } = getUserValidator.validate(req.params);
-    // if (error) {
-    //   return res.status(400).send(error.details[0].message);
-    // }
+    const { error } = getUserValidator.validate(req.params);
+    if (error) {
+      return res.status(400).send(error.details[0].message);
+    }
     const result = await userModel.destroy({ where: { user_id: id } });
     res.status(200).send({ result });
   } catch (err) {

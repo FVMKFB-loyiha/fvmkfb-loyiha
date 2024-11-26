@@ -4,19 +4,25 @@ import {
   userModel,
   user_taskModel,
 } from "../../model/core/index.js";
+import eduModel from "../../model/core/user/userEdu.model.js";
 
 function setupModels() {
   // Many-to-Many: userModel va tasksModel o'rtasida user_taskModel orqali aloqani o'rnatamiz
   userModel.belongsToMany(tasksModel, {
-    through: user_taskModel,    // user_taskModel: join jadvali
-    foreignKey: "user_id",      // user_id foreign key (userModel)
-    otherKey: "task_id",        // task_id foreign key (tasksModel)
+    through: user_taskModel, // user_taskModel: join jadvali
+    foreignKey: "user_id", // user_id foreign key (userModel)
+    otherKey: "task_id", // task_id foreign key (tasksModel)
   });
 
+  // eduModel definition
+  
+  userModel.hasMany(eduModel, { foreignKey: "user_id" });
+  eduModel.belongsTo(userModel, { foreignKey: "user_id" });
+
   tasksModel.belongsToMany(userModel, {
-    through: user_taskModel,    // user_taskModel: join jadvali
-    foreignKey: "task_id",      // task_id foreign key (tasksModel)
-    otherKey: "user_id",        // user_id foreign key (userModel)
+    through: user_taskModel, // user_taskModel: join jadvali
+    foreignKey: "task_id", // task_id foreign key (tasksModel)
+    otherKey: "user_id", // user_id foreign key (userModel)
   });
 
   // One-to-Many: userModel va user_taskModel o'rtasida bog'lanish

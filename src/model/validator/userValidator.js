@@ -18,14 +18,14 @@ export const registerUserValidator = Joi.object({
 
 export const loginUserValidator = Joi.object({
   email: Joi.string().required(),
-  password: Joi.string().min(9).required(),
+  phone: Joi.string().min(12).required(),
 });
 
-// export const getUserValidator = Joi.object({
-//   id: Joi.string()
-//     .pattern(/^[0-9]+$/)
-//     .required(),
-// });
+export const getUserValidator = Joi.object({
+  id: Joi.string()
+    .pattern(/^[0-9]+$/)
+    .required(),
+});
 
 export const updateUserValidator = Joi.object({
   fullname: Joi.string().required(),
