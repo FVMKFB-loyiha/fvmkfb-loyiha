@@ -101,71 +101,169 @@ function generateToken(data) {
   return jwt.sign(data, getDotEnv("JWT_SECRET"), { expiresIn: "1d" });
 }
 
-// sorting users ✅
+
 export async function searchUserController(req, res) {
   try {
-    const { searchTerm, fullname, bolim, lavozim, malumoti, email, createdAt } =
+    const allowedFilters = ["searchTerm", "fullname", "department", "position", "degree", "email", "createdAt"];
+    const filters = Object.keys(req.query);
+
+    // Noto'g'ri parametrlarga ishlov berish
+    const invalidFilters = filters.filter((key) => !allowedFilters.includes(key));
+    if (invalidFilters.length > 0) {
+      return res.status(400).json({
+        message: `Noto'g'ri so'rov parametrlari: ${invalidFilters.join(", ")}`,
+      });
+    }
+
+    const { searchTerm, fullname, department, position, degree, email, createdAt } =
       req.query;
 
     let where = {};
+    let eduWhere = {}; // userEdu modeli uchun filter
 
+    // searchTerm orqali qidirish
     if (searchTerm) {
       where[Op.or] = [
         { fullname: { [Op.iLike]: `%${searchTerm}%` } },
-        { bolim: { [Op.iLike]: `%${searchTerm}%` } },
-        { lavozim: { [Op.iLike]: `%${searchTerm}%` } },
-        { malumoti: { [Op.iLike]: `%${searchTerm}%` } },
+        { department: { [Op.iLike]: `%${searchTerm}%` } },
+        { position: { [Op.iLike]: `%${searchTerm}%` } },
         { email: { [Op.iLike]: `%${searchTerm}%` } },
-        { createdAt: { [Op.gte]: `%${searchTerm}%` } },
       ];
+
+      eduWhere.degree = { [Op.iLike]: `%${searchTerm}%` };
     }
 
+    // Qo'shimcha filtrlar
     if (fullname) {
       where.fullname = { [Op.iLike]: `%${fullname}%` };
     }
-
-    if (bolim) {
-      where.bolim = { [Op.iLike]: `%${bolim}%` };
+    if (department) {
+      where.department = { [Op.iLike]: `%${department}%` };
     }
-
-    if (lavozim) {
-      where.lavozim = { [Op.iLike]: `%${lavozim}%` };
+    if (position) {
+      where.position = { [Op.iLike]: `%${position}%` };
     }
-
-    if (malumoti) {
-      where.malumoti = { [Op.iLike]: `%${malumoti}%` };
+    if (degree) {
+      eduWhere.degree = { [Op.iLike]: `%${degree}%` };
     }
-
     if (email) {
       where.email = { [Op.iLike]: `%${email}%` };
     }
-
     if (createdAt) {
-      where.createdAt = {
-        [Op.gte]: new Date(createdAt),
-      };
+      const date = new Date(createdAt);
+      if (!isNaN(date.getTime())) {
+        where.createdAt = { [Op.gte]: date };
+      }
     }
-    // ... другие условия для age, city, createdAt
 
+    // Foydalanuvchilarni qidirish
     const results = await userModel.findAll({
       where,
-      // ... другие опции
+      include: [
+        {
+          model: eduModel, // userEdu modelini qo'shamiz
+          where: eduWhere, // userEdu uchun filter
+          required: degree || searchTerm ? true : false, // degree yoki searchTerm mavjud bo'lsa, majburiy join
+        },
+      ],
+      attributes: ["user_id", "fullname", "department", "position", "email", "createdAt"], // Faqat kerakli maydonlarni qaytaring
     });
 
     if (results.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "Bunday foydalanuvchi topilmadi." });
+      return res.status(404).json({ message: "Bunday foydalanuvchi topilmadi." });
     } else {
-      res.status(200).json(results);
+      return res.status(200).json(results);
     }
   } catch (error) {
     console.error("Foydalanuvchini qidirishdagi xatolik:", error);
-    res
-      .status(500)
-      .json({ message: "Foydalanuvchini qidirshda xatolik yuz berdi!" });
+    return res.status(500).json({
+      message: "Foydalanuvchini qidirishda xatolik yuz berdi!",
+    });
   }
 }
+
+
+
+
+
+
+// // sorting users ✅
+// export async function searchUserController(req, res) {
+//   try {
+
+//     const allowedFilters = ["searchTerm", "fullname", "department", "position", "degree", "email", "createdAt"];
+//     const filters = Object.keys(req.query);
+
+//     const invalidFilters = filters.filter((key) => !allowedFilters.includes(key));
+//     if (invalidFilters.length > 0) {
+//       return res.status(400).json({
+//         message: `Noto'g'ri so'rov parametrlari: ${invalidFilters.join(", ")}`,
+//       });
+//     }
+
+//     const { searchTerm, fullname, department, position, degree, email, createdAt } =
+//       req.query;
+
+//     let where = {};
+
+//     if (searchTerm) {
+//       where[Op.or] = [
+//         { fullname: { [Op.iLike]: `%${searchTerm}%` } },
+//         { department: { [Op.iLike]: `%${searchTerm}%` } },
+//         { position: { [Op.iLike]: `%${searchTerm}%` } },
+//         { degree: { [Op.iLike]: `%${searchTerm}%` } },
+//         { email: { [Op.iLike]: `%${searchTerm}%` } },
+//         { createdAt: { [Op.gte]: `%${searchTerm}%` } },
+//       ];
+//     }
+
+//     if (fullname) {
+//       where.fullname = { [Op.iLike]: `%${fullname}%` };
+//     }
+
+//     if (department) {
+//       where.department = { [Op.iLike]: `%${department}%` };
+//     }
+
+//     if (position) {
+//       where.position = { [Op.iLike]: `%${position}%` };
+//     }
+
+//     if (degree) {
+//       where.degree = { [Op.iLike]: `%${degree}%` };
+//     }
+
+//     if (email) {
+//       where.email = { [Op.iLike]: `%${email}%` };
+//     }
+
+//     if (createdAt) {
+//       const date = new Date(createdAt);
+//       if (!isNaN(date.getTime())) {
+//         where.createdAt = { [Op.gte]: date };
+//       }
+//     }
+//     // ... другие условия для age, city, createdAt
+
+//     const results = await userModel.findAll({
+//       where,
+//       // ... другие опции
+//     });
+
+//     if (results.length === 0) {
+//       return res
+//         .status(404)
+//         .json({ message: "Bunday foydalanuvchi topilmadi." });
+//     } else {
+//       res.status(200).json(results);
+//     }
+//   } catch (error) {
+//     console.error("Foydalanuvchini qidirishdagi xatolik:", error);
+//     res
+//       .status(500)
+//       .json({ message: "Foydalanuvchini qidirshda xatolik yuz berdi!" });
+//   }
+// }
 
 // pagination ✅
 export async function getAllUser(req, res) {
