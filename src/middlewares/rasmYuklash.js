@@ -1,7 +1,7 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4, v4 } from "uuid";
 
 // Multer saqlash konfiguratsiyasi
 const uploadDir = "./uploads/userphotos"; // Katalogni hozirgi ishchi papkada joylashtiramiz
@@ -20,7 +20,8 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, callback) {
     const extname = path.extname(file.originalname); // Fayl kengaytmasini olish
-    callback(null, uuidv4() + extname); // UUID bilan noyob nom yaratish
+    const originalName = file.originalname.split('.')[0]; // Get filename without extension
+    callback(null, originalName + '-' + v4() + extname); // UUID bilan noyob nom yaratish
   },
 });
 

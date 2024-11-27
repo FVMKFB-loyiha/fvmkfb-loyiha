@@ -2,6 +2,8 @@ import jwt from "jsonwebtoken";
 import getDotEnv from "../../../common/config/dotenv.config.js";
 import { Op, where } from "sequelize";
 import userModel from "./user.model.js";
+import path from 'path';
+import fs from 'fs';
 
 import {
   getUserValidator,
@@ -27,7 +29,7 @@ function generateToken(data) {
   return jwt.sign(data, getDotEnv("JWT_SECRET"), { expiresIn: "1d" });
 }
 
-// register user service ✅
+// register user service 
 export async function registerUser(req, res) {
   try {
     const { fullname, email, birth_date, department, position, phone, edu } =
@@ -77,7 +79,7 @@ export async function registerUser(req, res) {
   }
 }
 
-// login user ✅ 
+// login user 
 export async function loginUser(req, res) {
   try {
     const { email, phone } = req.body;
@@ -115,7 +117,7 @@ export async function loginUser(req, res) {
   }
 }
 
-// sorting users 🌋
+// sorting users 
 export async function searchUserController(req, res) {
   try {
     const { searchTerm, fullname, bolim, lavozim, malumoti, email, createdAt } =
@@ -181,7 +183,7 @@ export async function searchUserController(req, res) {
   }
 }
 
-// pagination ✅
+// pagination 
 export async function getAllUser(req, res) {
   try {
     const { page = 1, limit = 10 } = req.query;
@@ -231,7 +233,7 @@ export async function getAllUser(req, res) {
   }
 }
 
-// get by ID ✅
+// get by ID 
 export async function getUser(req, res) {
   try {
     const { id } = req.params;
@@ -262,23 +264,47 @@ export async function getUser(req, res) {
   }
 }
 
-// update user hali to'liq emas 🌋
+// update user hali to'liq emas 
 export async function  updateUser(req, res) {
   try {
     let { id } = req.params;
     id = id * 1; // numeric ID
-  
-    const { fullname, email, birth_date, department, position, phone, edu } = req.body;
-    const eduParse = edu ? JSON.parse(edu) : [];
-
-    const { error: idError } = getUserValidator.validate(req.params);
-    if (idError) {
-      return res.status(400).send(idError.details[0].message);
-    }
 
     const oldDataUser = await userModel.findOne({where:{user_id:id}});
     if (!oldDataUser) {
       return res.status(404).send("Bunday ID'lik foydalanuchi topilmadi!");
+    }
+
+    const { fullname, email, birth_date, department, position, phone } = req.body;
+    
+    // Handle picture update
+    let newPicture = oldDataUser.picture; // Default to old picture
+    let newFile = oldDataUser.file; // Default to old file path
+    if (req.file) {
+      // Delete old picture if it exists and is not the default
+      if (oldDataUser.picture && oldDataUser.picture !== 'default-ava.jpg') {
+        const oldPicturePath = path.join('./uploads/userphotos', oldDataUser.picture);
+        try {
+          if (fs.existsSync(oldPicturePath)) {
+            fs.unlinkSync(oldPicturePath);
+          }
+        } catch (error) {
+          console.error('Error deleting old picture:', error);
+        }
+      }
+      // Delete old file if it exists
+      if (oldDataUser.file) {
+        try {
+          if (fs.existsSync(oldDataUser.file)) {
+            fs.unlinkSync(oldDataUser.file);
+          }
+        } catch (error) {
+          console.error('Error deleting old file:', error);
+        }
+      }
+      // Set new picture and file path
+      newPicture = req.file.filename;
+      newFile = req.file.path;
     }
 
     const updatedDataUser = {
@@ -288,6 +314,8 @@ export async function  updateUser(req, res) {
       department: department || oldDataUser.department,
       position: position || oldDataUser.position,
       phone: phone || oldDataUser.phone,
+      picture: newPicture,
+      file: newFile
     };
 
     const result = await userModel.update(updatedDataUser, {
@@ -303,23 +331,9 @@ export async function  updateUser(req, res) {
       return res.status(404).send("Bunday ID'lik foydalanuchi topilmadi!");
     }
 
-    if (edu && Array.isArray(eduParse)) {
-      await Promise.all(
-        eduParse.map(async (eduItem) => {
-          const existingEdu = await eduModel.findOne({
-            where: { user_id: oldDataUser.user_id, edu_name: eduItem.edu_name },
-          });
-
-          if (existingEdu) {
-            await existingEdu.update(eduItem);
-          } else {
-            await eduModel.create({ ...eduItem, user_id: oldDataUser.user_id });
-          }
-        })
-      );
-    }
     res.json(updatedUser);
   } catch (err) {
+    console.log(err);
     res.status(500).json(err.message);
   }
 }
