@@ -29,7 +29,7 @@ function generateToken(data) {
   return jwt.sign(data, getDotEnv("JWT_SECRET"), { expiresIn: "1d" });
 }
 
-// register user service
+// register user service ✅
 export async function registerUser(req, res) {
   try {
     const { fullname, email, birth_date, department, position, phone, edu } =
@@ -78,7 +78,7 @@ export async function registerUser(req, res) {
   }
 }
 
-// login user
+// login user ✅
 export async function loginUser(req, res) {
   try {
     const { email, phone } = req.body;
@@ -120,7 +120,7 @@ export async function loginUser(req, res) {
   }
 }
 
-// sorting users
+// sorting users ✅
 export async function searchUserController(req, res) {
   try {
     const { searchTerm, fullname, bolim, lavozim, malumoti, email, createdAt } =
@@ -186,7 +186,7 @@ export async function searchUserController(req, res) {
   }
 }
 
-// pagination
+// pagination ✅
 export async function getAllUser(req, res) {
   try {
     const { page = 1, limit = 10 } = req.query;
@@ -236,7 +236,7 @@ export async function getAllUser(req, res) {
   }
 }
 
-// get by ID
+// get by ID ✅
 export async function getUser(req, res) {
   try {
     const { id } = req.params;
@@ -267,7 +267,7 @@ export async function getUser(req, res) {
   }
 }
 
-// update user
+// update user ✅
 export async function updateUser(req, res) {
   try {
     let { id } = req.params;
