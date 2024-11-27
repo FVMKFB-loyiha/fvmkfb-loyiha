@@ -2,8 +2,8 @@ import jwt from "jsonwebtoken";
 import getDotEnv from "../../../common/config/dotenv.config.js";
 import { Op, where } from "sequelize";
 import userModel from "./user.model.js";
-import path from 'path';
-import fs from 'fs';
+import path from "path";
+import fs from "fs";
 
 import {
   getUserValidator,
@@ -16,7 +16,7 @@ import eduModel from "./userEdu.model.js";
 // import { profilePicMiddleware } from "../../../middlewares/rasmYuklash.js";
 
 // rasm saqlanadigan direktoriya
-const uploadDir = "../uploads/userphotos";
+const uploadDir = "../uploads/userphotos/";
 
 // functions
 export const findUserByEmail = async function (email) {
@@ -29,18 +29,17 @@ function generateToken(data) {
   return jwt.sign(data, getDotEnv("JWT_SECRET"), { expiresIn: "1d" });
 }
 
-// register user service 
+// register user service
 export async function registerUser(req, res) {
   try {
     const { fullname, email, birth_date, department, position, phone, edu } =
       req.body;
 
-    let picture = req.file ? req.file.filename : "default-ava.jpg";
-    let filePath = req.file ? req.file.path : null;
+    let picture = req.file ? req.file.filename : "default-ava.png";
+    let filePath = req.file ? req.file.path : uploadDir + "default-ava.png";
 
     let eduParse = JSON.parse(edu);
 
-    // Foydalanuvchi ma'lumotlarini yaratish
     const user = await userModel.create({
       fullname,
       email,
@@ -79,7 +78,7 @@ export async function registerUser(req, res) {
   }
 }
 
-// login user 
+// login user
 export async function loginUser(req, res) {
   try {
     const { email, phone } = req.body;
@@ -95,7 +94,11 @@ export async function loginUser(req, res) {
     }
 
     if (existingUser.email === email && existingUser.phone === phone) {
-      const token = generateToken({id:existingUser.user_id,  email: existingUser.email, role: "hodim" });
+      const token = generateToken({
+        id: existingUser.user_id,
+        email: existingUser.email,
+        role: "hodim",
+      });
 
       // Cookie ni sozlash
       res.cookie("token", token, {
@@ -117,7 +120,7 @@ export async function loginUser(req, res) {
   }
 }
 
-// sorting users 
+// sorting users
 export async function searchUserController(req, res) {
   try {
     const { searchTerm, fullname, bolim, lavozim, malumoti, email, createdAt } =
@@ -183,7 +186,7 @@ export async function searchUserController(req, res) {
   }
 }
 
-// pagination 
+// pagination
 export async function getAllUser(req, res) {
   try {
     const { page = 1, limit = 10 } = req.query;
@@ -206,13 +209,13 @@ export async function getAllUser(req, res) {
         {
           model: tasksModel,
           required: false,
-          attributes: ["name", "status"]
+          attributes: ["name", "status"],
         },
         {
           model: eduModel,
           required: false,
-          attributes: ["edu_name", "degree", "specialty","study_year"]
-        }
+          attributes: ["edu_name", "degree", "specialty", "study_year"],
+        },
       ],
     });
 
@@ -233,7 +236,7 @@ export async function getAllUser(req, res) {
   }
 }
 
-// get by ID 
+// get by ID
 export async function getUser(req, res) {
   try {
     const { id } = req.params;
@@ -264,32 +267,36 @@ export async function getUser(req, res) {
   }
 }
 
-// update user hali to'liq emas 
-export async function  updateUser(req, res) {
+// update user
+export async function updateUser(req, res) {
   try {
     let { id } = req.params;
     id = id * 1; // numeric ID
 
-    const oldDataUser = await userModel.findOne({where:{user_id:id}});
+    const oldDataUser = await userModel.findOne({ where: { user_id: id } });
     if (!oldDataUser) {
       return res.status(404).send("Bunday ID'lik foydalanuchi topilmadi!");
     }
 
-    const { fullname, email, birth_date, department, position, phone } = req.body;
-    
+    const { fullname, email, birth_date, department, position, phone } =
+      req.body;
+
     // Handle picture update
     let newPicture = oldDataUser.picture; // Default to old picture
     let newFile = oldDataUser.file; // Default to old file path
     if (req.file) {
       // Delete old picture if it exists and is not the default
-      if (oldDataUser.picture && oldDataUser.picture !== 'default-ava.jpg') {
-        const oldPicturePath = path.join('./uploads/userphotos', oldDataUser.picture);
+      if (oldDataUser.picture && oldDataUser.picture !== "default-ava.png") {
+        const oldPicturePath = path.join(
+          "./uploads/userphotos",
+          oldDataUser.picture
+        );
         try {
           if (fs.existsSync(oldPicturePath)) {
             fs.unlinkSync(oldPicturePath);
           }
         } catch (error) {
-          console.error('Error deleting old picture:', error);
+          console.error("Error deleting old picture:", error);
         }
       }
       // Delete old file if it exists
@@ -299,7 +306,7 @@ export async function  updateUser(req, res) {
             fs.unlinkSync(oldDataUser.file);
           }
         } catch (error) {
-          console.error('Error deleting old file:', error);
+          console.error("Error deleting old file:", error);
         }
       }
       // Set new picture and file path
@@ -315,7 +322,7 @@ export async function  updateUser(req, res) {
       position: position || oldDataUser.position,
       phone: phone || oldDataUser.phone,
       picture: newPicture,
-      file: newFile
+      file: newFile,
     };
 
     const result = await userModel.update(updatedDataUser, {
@@ -324,7 +331,7 @@ export async function  updateUser(req, res) {
     });
 
     const updatedUser = await userModel.findOne({
-      where: { user_id: id }
+      where: { user_id: id },
     });
 
     if (!updatedUser) {
