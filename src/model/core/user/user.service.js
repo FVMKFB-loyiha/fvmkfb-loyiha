@@ -29,7 +29,7 @@ function generateToken(data) {
   return jwt.sign(data, getDotEnv("JWT_SECRET"), { expiresIn: "1d" });
 }
 
-// register user service ✅
+// register user service 
 export async function registerUser(req, res) {
   try {
     const { fullname, email, birth_date, department, position, phone, edu } =
@@ -79,7 +79,7 @@ export async function registerUser(req, res) {
   }
 }
 
-// login user ✅
+// hali to'liq emas 
 export async function loginUser(req, res) {
   try {
     const { email, phone } = req.body;
@@ -117,7 +117,7 @@ export async function loginUser(req, res) {
   }
 }
 
-// sorting users 🌋
+// sorting users 
 export async function searchUserController(req, res) {
   try {
     const { searchTerm, fullname, bolim, lavozim, malumoti, email, createdAt } =
@@ -183,7 +183,7 @@ export async function searchUserController(req, res) {
   }
 }
 
-// pagination 🌋
+// pagination ✅
 export async function getAllUser(req, res) {
   try {
     const { page = 1, limit = 10 } = req.query;
@@ -194,20 +194,26 @@ export async function getAllUser(req, res) {
       offset,
       attributes: [
         "fullname",
-        "role",
+        "email",
         "birth_date",
-        "bolim",
-        "lavozim",
-        "talim_muassasasi",
-        "malumoti",
-        "talim_davri",
-        "mutaxasisligi",
+        "picture",
+        "file",
+        "department",
+        "position",
         "phone",
       ],
-      include: {
-        model: tasksModel,
-        attributes: ["name", "status"],
-      },
+      include: [
+        {
+          model: tasksModel,
+          required: false,
+          attributes: ["name", "status"]
+        },
+        {
+          model: eduModel,
+          required: false,
+          attributes: ["edu_name", "degree", "specialty","study_year"]
+        }
+      ],
     });
 
     const totalUsers = await userModel.count();
@@ -226,7 +232,7 @@ export async function getAllUser(req, res) {
       .send("Foydalanuvchilarni olishda xatolik yuz berdi: " + err.message);
   }
 }
-// get by ID ✅
+// get by ID 
 export async function getUser(req, res) {
   try {
     const { id } = req.params;
@@ -238,8 +244,8 @@ export async function getUser(req, res) {
     const result = await userModel.findByPk(id, {
       include: [
         {
-          model: eduModel, // Specify the related model
-          required: false, // Whether to include users even if they don't have education records
+          model: eduModel,
+          required: false,
         },
       ],
     });
@@ -257,31 +263,69 @@ export async function getUser(req, res) {
   }
 }
 
-// update user hali to'liq emas 🌋
+// update user hali to'liq emas 
 export async function updateUser(req, res) {
   try {
-    const { id } = req.params;
-    const updatedUser = req.body;
+    let { id } = req.params;
+    id = id * 1; // numeric ID
+  
+    const { fullname, email, birth_date, department, position, phone, edu } = req.body;
+    const eduParse = edu ? JSON.parse(edu) : [];
+
     const { error: idError } = getUserValidator.validate(req.params);
     if (idError) {
       return res.status(400).send(idError.details[0].message);
     }
-    const { error: bodyError } = updateUserValidator.validate(req.body);
-    if (bodyError) {
-      return res.status(400).send(bodyError.details[0].message);
+
+    const oldDataUser = await userModel.findOne(id);
+    console.log(oldDataUser);
+    if (!oldDataUser) {
+      return res.status(404).send("Bunday ID'lik foydalanuchi topilmadi!");
     }
-    const result = await userModel.update(updatedUser, {
+
+    const updatedDataUser = {
+      fullname: fullname || oldDataUser.fullname,
+      email: email || oldDataUser.email,
+      birth_date: birth_date || oldDataUser.birth_date,
+      department: department || oldDataUser.department,
+      position: position || oldDataUser.position,
+      phone: phone || oldDataUser.phone,
+    };
+
+    const [affectedCount, updatedRows] = await userModel.update(updatedDataUser, {
       where: { user_id: id },
+      returning: true,
     });
-    res.status(200).send(result);
+
+    if (affectedCount === 0) {
+      return res.status(404).send("Bunday ID'lik foydalanuchi topilmadi!");
+    }
+
+    if (edu && Array.isArray(eduParse)) {
+      await Promise.all(
+        eduParse.map(async (eduItem) => {
+          const existingEdu = await eduModel.findOne({
+            where: { user_id: oldDataUser.user_id, edu_name: eduItem.edu_name },
+          });
+
+          if (existingEdu) {
+            await existingEdu.update(eduItem);
+          } else {
+            await eduModel.create({ ...eduItem, user_id: oldDataUser.user_id });
+          }
+        })
+      );
+    }
+
+    res.json(updatedRows);
   } catch (err) {
-    res
-      .status(500)
-      .send("Foydalanuvchini yangilashda xatolik yuz berdi: " + err.message);
+    console.error('Error:', err);
+    res.status(500).json(err.message);
   }
 }
 
-//delete user from DB ✅
+
+//delete user from DB 
 export async function deleteUser(req, res) {
   try {
     const { id } = req.params;

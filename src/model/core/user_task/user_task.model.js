@@ -3,7 +3,7 @@ import sequelize from "../../../common/database/sequelize.js";
 import userModel from "../user/user.model.js";
 import tasksModel from "../task/task.model.js";
 
-const user_taskModel = sequelize.define("user_tasks", {
+const userTaskModel = sequelize.define("user_tasks", {
   userTask_id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -29,4 +29,4 @@ const user_taskModel = sequelize.define("user_tasks", {
   },
 });
 
-export default user_taskModel;
+export default userTaskModel;
