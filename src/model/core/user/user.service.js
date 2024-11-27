@@ -1,8 +1,6 @@
 import jwt from "jsonwebtoken";
 import getDotEnv from "../../../common/config/dotenv.config.js";
-// import searchUsers from "../../../common/utils/search.js";
-// import fileSystem from "fs";
-import { Op } from "sequelize";
+import { Op, where } from "sequelize";
 import userModel from "./user.model.js";
 
 import {
@@ -29,7 +27,7 @@ function generateToken(data) {
   return jwt.sign(data, getDotEnv("JWT_SECRET"), { expiresIn: "1d" });
 }
 
-// register user service 
+// register user service ✅
 export async function registerUser(req, res) {
   try {
     const { fullname, email, birth_date, department, position, phone, edu } =
@@ -79,7 +77,7 @@ export async function registerUser(req, res) {
   }
 }
 
-// hali to'liq emas 
+// login user ✅ 
 export async function loginUser(req, res) {
   try {
     const { email, phone } = req.body;
@@ -95,7 +93,7 @@ export async function loginUser(req, res) {
     }
 
     if (existingUser.email === email && existingUser.phone === phone) {
-      const token = generateToken({ email: existingUser.email, role: "hodim" });
+      const token = generateToken({id:existingUser.user_id,  email: existingUser.email, role: "hodim" });
 
       // Cookie ni sozlash
       res.cookie("token", token, {
@@ -117,7 +115,7 @@ export async function loginUser(req, res) {
   }
 }
 
-// sorting users 
+// sorting users 🌋
 export async function searchUserController(req, res) {
   try {
     const { searchTerm, fullname, bolim, lavozim, malumoti, email, createdAt } =
@@ -232,7 +230,8 @@ export async function getAllUser(req, res) {
       .send("Foydalanuvchilarni olishda xatolik yuz berdi: " + err.message);
   }
 }
-// get by ID 
+
+// get by ID ✅
 export async function getUser(req, res) {
   try {
     const { id } = req.params;
@@ -263,8 +262,8 @@ export async function getUser(req, res) {
   }
 }
 
-// update user hali to'liq emas 
-export async function updateUser(req, res) {
+// update user hali to'liq emas 🌋
+export async function  updateUser(req, res) {
   try {
     let { id } = req.params;
     id = id * 1; // numeric ID
@@ -277,8 +276,7 @@ export async function updateUser(req, res) {
       return res.status(400).send(idError.details[0].message);
     }
 
-    const oldDataUser = await userModel.findOne(id);
-    console.log(oldDataUser);
+    const oldDataUser = await userModel.findOne({where:{user_id:id}});
     if (!oldDataUser) {
       return res.status(404).send("Bunday ID'lik foydalanuchi topilmadi!");
     }
@@ -292,12 +290,16 @@ export async function updateUser(req, res) {
       phone: phone || oldDataUser.phone,
     };
 
-    const [affectedCount, updatedRows] = await userModel.update(updatedDataUser, {
+    const result = await userModel.update(updatedDataUser, {
       where: { user_id: id },
       returning: true,
     });
 
-    if (affectedCount === 0) {
+    const updatedUser = await userModel.findOne({
+      where: { user_id: id }
+    });
+
+    if (!updatedUser) {
       return res.status(404).send("Bunday ID'lik foydalanuchi topilmadi!");
     }
 
@@ -316,16 +318,13 @@ export async function updateUser(req, res) {
         })
       );
     }
-
-    res.json(updatedRows);
+    res.json(updatedUser);
   } catch (err) {
-    console.error('Error:', err);
     res.status(500).json(err.message);
   }
 }
 
-
-//delete user from DB 
+//delete user from DB ✅
 export async function deleteUser(req, res) {
   try {
     const { id } = req.params;

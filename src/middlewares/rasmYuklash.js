@@ -40,21 +40,18 @@ const fileFilter = (req, file, callback) => {
 const picDownload = multer({
   storage,
   limits: {
-    fileSize: 3 * 1024 * 1024, // Maksimal fayl hajmi: 3MB
+    fileSize: 1 * 1024 * 1024, // Maksimal fayl hajmi: 3MB
   },
   fileFilter,
 }).single("picture",1); // "picture" - frontendda fayl inputining name atributi
 
 // Middleware funksiyasi
 export function profilePicMiddleware(req, res, next) {
-  // `picDownload` middleware'ini asinxron ishlatish uchun
   picDownload(req, res, (err) => {
     if (err) {
-      console.error(err);
-      // Agar xatolik bo'lsa, xatolikni qaytarish
       return res.status(400).json({
         message: "Fayl yuklashda hatolik",
-        error: err,
+        error: err.message,
       });
     }
 

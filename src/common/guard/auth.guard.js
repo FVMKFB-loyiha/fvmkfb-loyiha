@@ -14,7 +14,6 @@ async function authGuard(req, res, next) {
     if (!req.user) {
       return res.status(401).send("Ushbu tokeendagi foydalanuvchi topilmadi!");
     }
-    // console.log("auth error => ", result)
 
     next();
   } catch (err) {
