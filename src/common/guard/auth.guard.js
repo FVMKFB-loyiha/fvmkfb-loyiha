@@ -1,24 +1,24 @@
 import jwt from "jsonwebtoken";
-import getDotEnv from "../common/config/config.service.js";
-import userModel from "../../model/core/users/user.model.js";
+import { userModel } from "../../model/core/index.js";
+import getDotEnv from "../config/dotenv.config.js";
 
 async function authGuard(req, res, next) {
   const token = req.headers["authorization"]?.split(" ")[1];
   if (!token) {
-    res.status(401).send("Kalit berilmagan!");
+    return res.status(401).send("Kalit berilmagan!"); // Javobni to‘xtatib yuborish
   }
   try {
-    const result = await jwt.verify(token, getDotEnv("JWT_SECRET"));
+    const result = await jwt.verify(token, getDotEnv("JwT_SECRET"));
     req.user = await userModel.findOne({ where: { email: result.email } });
 
     if (!req.user) {
       return res.status(401).send("Ushbu tokeendagi foydalanuvchi topilmadi!");
     }
 
-    next();
+    next(); // Javob yuborilganidan keyin next() chaqiriladi
   } catch (err) {
     console.log("auth error => ", err);
-    res.status(401).send("So'rovga huquqingiz yetarli emas auth!");
+    return res.status(401).send("So'rovga huquqingiz yetarli emas auth!"); // Javobni yuborish va funktsiyani to‘xtatish
   }
 }
 

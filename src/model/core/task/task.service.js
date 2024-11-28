@@ -7,61 +7,184 @@ import userModel from "../user/user.model.js";
 // import { readFromFile, writeToFile } from "../user/user.service.js";
 import tasksModel from "./task.model.js";
 
+// add Task ✅
 export async function addTask(req, res) {
   try {
-    const { newTask } = req.body;
+    const { title, status } = req.body;
+
     if (!req.file) {
       return res.status(400).send("Fayl yuklanmadi");
     }
 
-    console.log("Yangi vazifa (fayl bilan):", newTask);
-    const { error } = addTaskValidator.validate(newTask);
+    const userRole = req.user?.role;
+    if (userRole !== "admin") {
+      return res
+        .status(403)
+        .send("Yangi vazifani faqat admin qo'shishi mumkin!");
+    }
+
+    console.log("Yangi vazifa ma'lumotlari:", { title, status, userRole });
+
+    // Validatsiya
+    const { error } = addTaskValidator.validate({ title, status });
     if (error) {
       console.log("Validatsiya xatoligi:", error.details[0].message);
       return res.status(400).send(error.details[0].message);
     }
 
-    if (req.file) {
-      newTask.file = req.file.destination + req.file.filename;
-    }
-    let borVazifalar = readFromFile("file.json");
+    // Fayl manzilini qo'shish
+    const filePath = req.file.destination + req.file.filename;
 
-    if (!borVazifalar) {
-      borVazifalar = [];
+    // Ma'lumotlarni bazaga yozish uchun tayyorlash
+    const newTask = {
+      title,
+      status,
+      file: filePath,
+    };
 
-      writeToFile("file.json", [newTask]);
-      console.log("foydalanuvchi muvaffaqiyatli ro'yxatdan o'tdi");
-    } else {
-      borVazifalar.push(newTask);
-      writeToFile("file.json", borVazifalar);
-    }
+    const result = await tasksModel.create(newTask);
 
-    const result = await tasksModel.create(newTask); // Bazaga yozish
     res
       .status(201)
       .send({ message: "Ma'lumotlar muvaffaqiyatli qo'shildi", result });
   } catch (err) {
     console.log("TASK XATOLIGI=> ", err);
-    res.status(500).send("Yangi xona qo'shishda xatolik bo'ldi" + err.message);
+    res
+      .status(500)
+      .send("Yangi vazifa qo'shishda xatolik bo'ldi: " + err.message);
+  }
+}
+
+// hodim vazifani qabul qilishi✅
+export async function handleXodimDecision(req, res) {
+  try {
+    const { tasks_id, status } = req.body;
+
+    // Validatsiya qilish
+    if (!tasks_id || !status) {
+      return res
+        .status(400)
+        .send("tasks_id va status maydonlarini kiritish majburiy.");
+    }
+
+    // Faqat "accept" yoki "reject" statuslarini qabul qilish
+    if (!["accept", "reject"].includes(status)) {
+      return res
+        .status(400)
+        .send(
+          "Noto'g'ri status qiymati. Faqat 'accept' yoki 'reject' bo'lishi mumkin."
+        );
+    }
+
+    // Bazadan vazifa ma'lumotlarini olish
+    const task = await tasksModel.findOne({ where: { tasks_id } });
+
+    if (!task) {
+      return res.status(404).send("Bunday vazifa topilmadi.");
+    }
+
+    // Holatni tekshirish: Faqat "kutilmoqda" yoki "jarayonda" holatida o'zgarishi mumkin
+    if (!["kutilmoqda", "jarayonda"].includes(task.status)) {
+      return res
+        .status(400)
+        .send("Bu vazifa holatini o'zgartirishga ruxsat yo'q.");
+    }
+
+    // Fayl manzilini tekshirish
+    if (!task.file) {
+      return res.status(400).send("Vazifaga hech qanday fayl biriktirilmagan.");
+    }
+
+    // Statusni yangilash
+    const newStatus = status === "accept" ? "jarayonda" : "bekor qilindi";
+
+    await tasksModel.update({ status: newStatus }, { where: { tasks_id } });
+
+    // Javob qaytarish
+    res.status(200).send({
+      message: `Vazifa holati muvaffaqiyatli qabul qilindi: ${newStatus}`,
+      fileUrl: task.file, // Faylni yuklab olish uchun manzil
+    });
+  } catch (err) {
+    console.log("TASK STATUS XATOLIGI=> ", err);
+    res
+      .status(500)
+      .send("Statusni yangilashda xatolik yuz berdi: " + err.message);
+  }
+}
+
+// xodim qabul qilingan vazifani qaytadan yuklashi✅
+export async function handleTaskCompletion(req, res) {
+  try {
+    const { tasks_id, comment } = req.body;
+
+    console.log("hande task completion body=>", req.body);
+    console.log("hande task completion file=>", req.file);
+
+    // Validatsiya qilish
+    if (!tasks_id || !comment) {
+      return res
+        .status(400)
+        .send("tasks_id, comment maydonlarini kiritish majburiy.");
+    }
+
+    // Bazadan vazifa ma'lumotlarini olish
+    const task = await tasksModel.findOne({ where: { tasks_id } });
+
+    if (!task) {
+      return res.status(404).send("Bunday vazifa topilmadi.");
+    }
+
+    if (!req.file) {
+      return res.status(400).send("Fayl topilmadi!");
+    }
+
+    // Faqat "jarayonda" holatdagi vazifani bajarilgan deb belgilash mumkin
+    if (task.status !== "jarayonda") {
+      return res
+        .status(400)
+        .send(
+          "Faqat 'jarayonda' holatdagi vazifani bajarilgan deb belgilash mumkin."
+        );
+    }
+
+    const filePath = req.file.destination + req.file.filename;
+
+    // Izohni va statusni yangilash
+    await tasksModel.update(
+      {
+        status: "bajarildi",
+        filePath,
+        comment, // Izohni saqlash
+      },
+      { where: { tasks_id } }
+    );
+
+    res.status(200).send({
+      message: "Vazifa muvaffaqiyatli bajarildi.",
+      fileUrl: task.file,
+    });
+  } catch (err) {
+    console.log("TASK COMPLETION XATOLIGI=> ", err);
+    res
+      .status(500)
+      .send(
+        "Vazifani bajarilgan deb belgilashda xatolik yuz berdi: " + err.message
+      );
   }
 }
 
 export async function getAllTask(req, res) {
   try {
     const result = await tasksModel.findAll({
-      attributes: ["tasks_id", "name", "status"],
+      attributes: ["tasks_id", "title", "status"],
       include: {
         model: userModel,
         attributes: [
           "fullname",
-          "role",
           "birth_date",
-          "bolim",
-          "lavozim",
-          "talim_muassasasi",
-          "malumoti",
-          "talim_davri",
-          "mutaxasisligi",
+          "department",
+          "position",
           "phone",
         ],
       },

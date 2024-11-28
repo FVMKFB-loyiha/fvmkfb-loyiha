@@ -19,6 +19,7 @@ import { fileURLToPath } from "url";
 import { client } from "./common/database/config.js";
 import cookieParser from "cookie-parser";
 const app = express();
+app.use(express.urlencoded({ extended: true }));  // xususan form-data uchun
 const server = http.createServer(app);
 initializeSocket(server);
 

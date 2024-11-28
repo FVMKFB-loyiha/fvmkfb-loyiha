@@ -15,6 +15,11 @@ const userModel = sequelize.define(
       allowNull: false,
     },
 
+    role: {
+      type: DataTypes.ENUM('admin', 'hodim'),
+      allowNull: false,
+    },
+
     email: {
       type: DataTypes.STRING,
       unique: true,
@@ -26,22 +31,20 @@ const userModel = sequelize.define(
       allowNull: false,
     },
 
-    
     picture: {
       type: DataTypes.STRING,
       allowNull: false,
     },
 
-    file:{
+    file: {
       type: DataTypes.STRING,
-      allowNull:true
+      allowNull: true,
     },
 
     department: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-
 
     position: {
       type: DataTypes.STRING,

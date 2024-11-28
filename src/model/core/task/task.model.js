@@ -8,12 +8,17 @@ const tasksModel = sequelize.define("tasks", {
     autoIncrement: true
   },
 
-  name: {
+  title: {
     type: DataTypes.STRING,
     allowNull: false,
   },
 
-  file_path: {
+  comment: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+
+  file: {
     type: DataTypes.STRING,
     allowNull: true
   },
