@@ -10,7 +10,7 @@ import {
 } from "../core/user/user.service.js";
 import { profilePicMiddleware } from "../../middlewares/rasmYuklash.js";
 import multer from "multer";
-const upload= multer()
+const upload = multer();
 
 const userRouter = Router();
 
@@ -20,7 +20,7 @@ userRouter
   .get("/:id", getUser)
   .post("/register", profilePicMiddleware, registerUser)
   .post("/login", loginUser)
-  .patch("/:id",profilePicMiddleware, updateUser)
+  .patch("/:id", profilePicMiddleware, updateUser)
   .delete("/:id", deleteUser);
 
 export default userRouter;

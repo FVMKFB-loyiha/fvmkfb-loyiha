@@ -15,9 +15,13 @@ import http from "http";
 import pg from "pg";
 import { Server } from "socket.io";
 import NotificationRouter from "./model/routes/notification.router.js";
-import { fileURLToPath } from "url";
 import { client } from "./common/database/config.js";
 import cookieParser from "cookie-parser";
+
+// swagger
+import { swaggerDoc, swaggerUi } from "./common/config/swagger.config.js";
+
+const PORT = getDotEnv("EXPRESS_PORT") || 3000;
 const app = express();
 const server = http.createServer(app);
 initializeSocket(server);
@@ -29,8 +33,6 @@ const io = new Server(server, {
 });
 
 const { Client } = pg;
-
-const PORT = getDotEnv("EXPRESS_PORT") || 3000;
 
 function initRoutes() {
   app.use("/user", userRouter);
@@ -70,7 +72,7 @@ async function init() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
-
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
   await connectToDb();
   initRoutes();
 
