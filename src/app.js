@@ -7,10 +7,21 @@ import {
   userTaskRouter,
   taskRouter,
 } from "./model/routes/index.js";
+// <<<<<<< HEAD
+
+// mongoose config ulash
+import { client } from "./common/database/config.js";
+
+// swagger configni'ni chaqirish
+
+// socket.io config chaqirish
+// import { initSocket } from "./common/config/socket.io.config.js";
+// import http from "http";
+
 import cookieParser from "cookie-parser";
 import { swaggerDoc, swaggerUi } from "./common/config/swagger.config.js";
 
-// ------------------ APP --------------------- //
+// // ------------------ APP --------------------- //
 
 const app = express();
 
@@ -33,7 +44,9 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
     await connectToDb();
     console.log(chalk.greenBright.italic("Database connection successful"));
   } catch (err) {
-    console.error(chalk.red("Ma'lumotlar bazasiga ulanishda xatolik:", err.message));
+    console.error(
+      chalk.red("Ma'lumotlar bazasiga ulanishda xatolik:", err.message)
+    );
     process.exit(1);
   }
 })();

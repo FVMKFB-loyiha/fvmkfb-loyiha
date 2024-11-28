@@ -9,8 +9,6 @@ import {
   updateUser,
 } from "../core/user/user.service.js";
 import { profilePicMiddleware } from "../../middlewares/rasmYuklash.js";
-import multer from "multer";
-const upload = multer();
 
 const userRouter = Router();
 

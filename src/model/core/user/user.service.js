@@ -232,7 +232,7 @@ export async function getAllUser(req, res) {
         {
           model: tasksModel,
           required: false,
-          attributes: ["name", "status"],
+          attributes: ["title", "status"],
         },
         {
           model: eduModel,
