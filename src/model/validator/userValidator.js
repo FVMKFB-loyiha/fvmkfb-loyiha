@@ -3,7 +3,7 @@ import Joi from "joi";
 export const registerUserValidator = Joi.object({
   fullname: Joi.string().required(),
   email: Joi.string().required(),
-  role: Joi.string().required(),
+  role: Joi.string(),
   phone: Joi.string().required().min(9),
   birth_date: Joi.string().required(),
   department: Joi.string().required(),
@@ -25,10 +25,10 @@ export const updateUserValidator = Joi.object({
   fullname: Joi.string(),
   email: Joi.string(),
   role: Joi.string(),
-  password: Joi.string().min(9),
   tugilgan_sana: Joi.string(),
   bolim: Joi.string(),
   // file: Joi.string(),
+  
   lavozim: Joi.string(),
   malumoti: Joi.string(),
   mutaxasisligi: Joi.string(),

@@ -13,6 +13,7 @@ import {
 } from "../../validator/userValidator.js";
 import tasksModel from "../task/task.model.js";
 import eduModel from "./userEdu.model.js";
+import chalk from "chalk";
 // import { profilePicMiddleware } from "../../../middlewares/rasmYuklash.js";
 
 // rasm saqlanadigan direktoriya
@@ -32,17 +33,24 @@ function generateToken(data) {
 // register user service ✅
 export async function registerUser(req, res) {
   try {
-    const { fullname, email, birth_date, department, position, phone, edu } =
+    const { fullname, email, role, birth_date, department, position, phone, edu } =
       req.body;
 
     let picture = req.file ? req.file.filename : "default-ava.png";
     let filePath = req.file ? req.file.path : uploadDir + "default-ava.png";
+
+    const { error } = registerUserValidator.validate({ fullname, email, role, birth_date, department, position, phone});
+    if (error) {
+      console.log("Validatsiya xatoligi:", error.details[0].message);
+      return res.status(400).send(error.details[0].message);
+    }
 
     let eduParse = JSON.parse(edu);
 
     const user = await userModel.create({
       fullname,
       email,
+      role,
       birth_date,
       picture,
       file: filePath,
@@ -81,6 +89,7 @@ export async function registerUser(req, res) {
 // login user ✅
 export async function loginUser(req, res) {
   try {
+    console.log(chalk.green(req.body));
     const { email, phone } = req.body;
     const { error } = loginUserValidator.validate(req.body);
     if (error) {
