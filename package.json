@@ -23,6 +23,7 @@
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
+    "chalk": "^4.1.2",
     "nodemon": "^3.1.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
