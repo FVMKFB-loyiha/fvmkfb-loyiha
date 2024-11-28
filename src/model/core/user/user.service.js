@@ -231,7 +231,7 @@ export async function getAllUser(req, res) {
         {
           model: tasksModel,
           required: false,
-          attributes: ["name", "status"],
+          attributes: ["title", "status"],
         },
         {
           model: eduModel,
@@ -376,7 +376,13 @@ export async function deleteUser(req, res) {
       return res.status(400).send(error.details[0].message);
     }
     const result = await userModel.destroy({ where: { user_id: id } });
-    res.status(200).send({ result });
+
+    if(result){
+     return res.status(200).send({ result });
+    }else {
+      return res.status(404).send({ result });
+    }
+
   } catch (err) {
     res
       .status(500)
