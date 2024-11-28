@@ -89,7 +89,6 @@ export async function registerUser(req, res) {
 // login user ✅
 export async function loginUser(req, res) {
   try {
-    console.log(chalk.green(req.body));
     const { email, phone } = req.body;
     const { error } = loginUserValidator.validate(req.body);
     if (error) {

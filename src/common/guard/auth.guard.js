@@ -1,17 +1,12 @@
 import jwt from "jsonwebtoken";
-import { userModel } from "../../model/core/index.js";
 import getDotEnv from "../config/dotenv.config.js";
+import chalk from "chalk";
 
-async function authGuard(req, res, next) {
+async function tokenChecker(req, res, next) {
   try {
-    const token = req.headers["authorization"]?.split(" ")[1];
-    
+    const token = req.headers["token"] || req.headers["authorization"]?.split(" ")[1];
+    console.log(chalk.blue(token));
     if (!token) {
-      console.warn("Authentication failed: No token provided", {
-        ip: req.ip,
-        path: req.path,
-        timestamp: new Date().toISOString()
-      });
       return res.status(401).json({
         error: "Authentication failed",
         message: "No authentication token provided",
@@ -20,13 +15,9 @@ async function authGuard(req, res, next) {
     }
 
     const result = await jwt.verify(token, getDotEnv("JwT_SECRET"));
+    console.log(chalk.bgRed(result));
     
-    if (!result || !result.email) {
-      console.warn("Authentication failed: Invalid token", {
-        ip: req.ip,
-        path: req.path,
-        timestamp: new Date().toISOString()
-      });
+    if (!result) {
       return res.status(401).json({
         error: "Authentication failed",
         message: "Invalid authentication token",
@@ -34,50 +25,15 @@ async function authGuard(req, res, next) {
       });
     }
 
-    const user = await userModel.findOne({ where: { email: result.email } });
-
-    if (!user) {
-      console.warn("Authentication failed: User not found", {
-        ip: req.ip,
-        path: req.path,
-        email: result.email,
-        timestamp: new Date().toISOString()
-      });
-      return res.status(401).json({
-        error: "Authentication failed",
-        message: "User not found",
-        code: "USER_NOT_FOUND"
-      });
-    }
-
-    // Add user info to request
-    req.user = user;
-    req.token = token;
-
     next();
   } catch (err) {
-    console.error("Authentication error:", {
+    console.error(chalk.strikethrough.red("Authentication error:", {
       error: err.message,
       stack: err.stack,
       ip: req.ip,
       path: req.path,
       timestamp: new Date().toISOString()
-    });
-
-    // Handle different types of JWT errors
-    if (err.name === 'JsonWebTokenError') {
-      return res.status(401).json({
-        error: "Authentication failed",
-        message: "Invalid token format",
-        code: "INVALID_TOKEN_FORMAT"
-      });
-    } else if (err.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        error: "Authentication failed",
-        message: "Token has expired",
-        code: "TOKEN_EXPIRED"
-      });
-    }
+    }));
 
     return res.status(500).json({
       error: "Server error",
@@ -87,4 +43,4 @@ async function authGuard(req, res, next) {
   }
 }
 
-export default authGuard;
+export default tokenChecker;
