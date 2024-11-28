@@ -28,6 +28,7 @@ export const updateUserValidator = Joi.object({
   tugilgan_sana: Joi.string(),
   bolim: Joi.string(),
   // file: Joi.string(),
+  
   lavozim: Joi.string(),
   malumoti: Joi.string(),
   mutaxasisligi: Joi.string(),

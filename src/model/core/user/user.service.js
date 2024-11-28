@@ -13,6 +13,7 @@ import {
 } from "../../validator/userValidator.js";
 import tasksModel from "../task/task.model.js";
 import eduModel from "./userEdu.model.js";
+import chalk from "chalk";
 // import { profilePicMiddleware } from "../../../middlewares/rasmYuklash.js";
 
 // rasm saqlanadigan direktoriya
@@ -88,6 +89,7 @@ export async function registerUser(req, res) {
 // login user ✅
 export async function loginUser(req, res) {
   try {
+    console.log(chalk.green(req.body));
     const { email, phone } = req.body;
     const { error } = loginUserValidator.validate(req.body);
     if (error) {
