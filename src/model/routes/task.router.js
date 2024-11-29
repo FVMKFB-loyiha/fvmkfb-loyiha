@@ -19,7 +19,7 @@ taskRouter
   .get("/:id", getTask)
   .post("/", authGuard ,fileDownloadMiddleware, addTask)
   .post("/status", authGuard ,handleXodimDecision)
-  .post("/vazifa", handleTaskCompletion)
+  .post("/vazifa", authGuard, fileDownloadMiddleware ,handleTaskCompletion)
   .put("/:id", updateTask)
   .delete("/:id", deleteTask);
 

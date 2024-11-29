@@ -7,7 +7,6 @@ import {
   userTaskRouter,
   taskRouter,
 } from "./model/routes/index.js";
-// <<<<<<< HEAD
 
 // mongoose config ulash
 import { client } from "./common/database/config.js";

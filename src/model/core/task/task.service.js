@@ -4,6 +4,7 @@ import {
   updateTaskValidator,
 } from "../../validator/taskValidator.js";
 import userModel from "../user/user.model.js";
+import eduModel from "../user/userEdu.model.js";
 // import { readFromFile, writeToFile } from "../user/user.service.js";
 import tasksModel from "./task.model.js";
 
@@ -116,13 +117,13 @@ export async function handleXodimDecision(req, res) {
 // xodim qabul qilingan vazifani qaytadan yuklashi✅
 export async function handleTaskCompletion(req, res) {
   try {
-    const { tasks_id, comment } = req.body;
+    const { tasks_id, comment} = req.body;
 
     console.log("hande task completion body=>", req.body);
     console.log("hande task completion file=>", req.file);
 
     // Validatsiya qilish
-    if (!tasks_id || !comment) {
+    if (!tasks_id || !comment === 0) {
       return res
         .status(400)
         .send("tasks_id, comment maydonlarini kiritish majburiy.");
@@ -162,7 +163,7 @@ export async function handleTaskCompletion(req, res) {
 
     res.status(200).send({
       message: "Vazifa muvaffaqiyatli bajarildi.",
-      fileUrl: task.file,
+      fileUrl: filePath,
     });
   } catch (err) {
     console.log("TASK COMPLETION XATOLIGI=> ", err);
@@ -174,30 +175,50 @@ export async function handleTaskCompletion(req, res) {
   }
 }
 
+
 export async function getAllTask(req, res) {
   try {
+    const { page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
+
     const result = await tasksModel.findAll({
-      attributes: ["tasks_id", "title", "status"],
-      include: {
-        model: userModel,
-        attributes: [
-          "fullname",
-          "birth_date",
-          "department",
-          "position",
-          "phone",
-        ],
-      },
+      limit,
+      offset,
+      attributes: [
+        "title", "status"
+      ],
+      include: [
+        {
+          model: userModel,
+          required: false,
+          attributes: [
+            "fullname",
+            "email",
+            "birth_date",
+            "picture",
+            "file",
+            "department",
+            "position",
+            "phone",
+          ],
+        }
+      ],
     });
-    res.status(200).send(result);
+
+    const totalTAsks = await tasksModel.count();
+
+    const totalPages = Math.ceil(totalTAsks / limit);
+
+    res.status(200).send({
+      users: result,
+      totalPages,
+      currentPage: page,
+    });
   } catch (err) {
-    console.log("tasks error", err);
+    console.error("user xatoligi", err);
     res
       .status(500)
-      .send(
-        "Qanday xonalar mavjudligi haqidagi ma'lumotlarni olishda xatolik bo'ldi: " +
-          err.message
-      );
+      .send("Foydalanuvchilarni olishda xatolik yuz berdi: " + err.message);
   }
 }
 
