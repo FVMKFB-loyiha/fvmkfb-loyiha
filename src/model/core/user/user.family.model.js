@@ -1,7 +1,7 @@
 import { DataTypes } from "sequelize";
-import sequelize from "../../../common/database/sequelize";
+import sequelize from "../../../common/database/sequelize.js";
 
-const FamilyMember = sequelize.define("FamilyMember", {
+const FamilyMember = sequelize.define("family_member", {
   family_member: {
     type: DataTypes.STRING,
     allowNull: false,

@@ -14,6 +14,7 @@ import {
 import tasksModel from "../task/task.model.js";
 import eduModel from "./userEdu.model.js";
 import chalk from "chalk";
+import FamilyMember from "./user.family.model.js";
 // import { profilePicMiddleware } from "../../../middlewares/rasmYuklash.js";
 
 // rasm saqlanadigan direktoriya
@@ -112,9 +113,19 @@ export async function userFamilyInfo(req, res) {
     });
   }
 
-  
+  const createdMembers = await FamilyMember.insertMany(familyInfo);
 
-
+  if (!createdMembers) {
+    res.status(500).send({
+      success: false,
+      message: "Something went wrong when saving data to database",
+    });
+  } else {
+    res.send({
+      success: true,
+      data: createdMembers,
+    });
+  }
 }
 
 // login user ✅
