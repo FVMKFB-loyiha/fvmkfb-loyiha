@@ -1,5 +1,6 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../../../common/database/sequelize.js";
+import tasksModel from "../task/task.model.js";
 
 const eduModel = sequelize.define("eduinfo", {
     edu_id: {
@@ -7,7 +8,7 @@ const eduModel = sequelize.define("eduinfo", {
       primaryKey: true,
       autoIncrement: true
     },
-  
+
     // ta'lim muassasasi
     edu_name: {
       type: DataTypes.STRING,
