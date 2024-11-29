@@ -33,13 +33,29 @@ function generateToken(data) {
 // register user service ✅
 export async function registerUser(req, res) {
   try {
-    const { fullname, email, role, birth_date, department, position, phone, edu } =
-      req.body;
+    const {
+      fullname,
+      email,
+      role,
+      birth_date,
+      department,
+      position,
+      phone,
+      edu,
+    } = req.body;
 
     let picture = req.file ? req.file.filename : "default-ava.png";
     let filePath = req.file ? req.file.path : uploadDir + "default-ava.png";
 
-    const { error } = registerUserValidator.validate({ fullname, email, role, birth_date, department, position, phone});
+    const { error } = registerUserValidator.validate({
+      fullname,
+      email,
+      role,
+      birth_date,
+      department,
+      position,
+      phone,
+    });
     if (error) {
       console.log("Validatsiya xatoligi:", error.details[0].message);
       return res.status(400).send(error.details[0].message);
@@ -105,7 +121,7 @@ export async function loginUser(req, res) {
       const token = generateToken({
         id: existingUser.user_id,
         email: existingUser.email,
-        role: "hodim",
+        role: existingUser.role,
       });
 
       // Cookie ni sozlash
@@ -131,19 +147,36 @@ export async function loginUser(req, res) {
 // soring users ✅
 export async function searchUserController(req, res) {
   try {
-    const allowedFilters = ["searchTerm", "fullname", "department", "position", "degree", "email", "createdAt"];
+    const allowedFilters = [
+      "searchTerm",
+      "fullname",
+      "department",
+      "position",
+      "degree",
+      "email",
+      "createdAt",
+    ];
     const filters = Object.keys(req.query);
 
     // Noto'g'ri parametrlarga ishlov berish
-    const invalidFilters = filters.filter((key) => !allowedFilters.includes(key));
+    const invalidFilters = filters.filter(
+      (key) => !allowedFilters.includes(key)
+    );
     if (invalidFilters.length > 0) {
       return res.status(400).json({
         message: `Noto'g'ri so'rov parametrlari: ${invalidFilters.join(", ")}`,
       });
     }
 
-    const { searchTerm, fullname, department, position, degree, email, createdAt } =
-      req.query;
+    const {
+      searchTerm,
+      fullname,
+      department,
+      position,
+      degree,
+      email,
+      createdAt,
+    } = req.query;
 
     let where = {};
     let eduWhere = {}; // userEdu modeli uchun filter
@@ -193,11 +226,20 @@ export async function searchUserController(req, res) {
           required: degree || searchTerm ? true : false, // degree yoki searchTerm mavjud bo'lsa, majburiy join
         },
       ],
-      attributes: ["user_id", "fullname", "department", "position", "email", "createdAt"], // Faqat kerakli maydonlarni qaytaring
+      attributes: [
+        "user_id",
+        "fullname",
+        "department",
+        "position",
+        "email",
+        "createdAt",
+      ], // Faqat kerakli maydonlarni qaytaring
     });
 
     if (results.length === 0) {
-      return res.status(404).json({ message: "Bunday foydalanuvchi topilmadi." });
+      return res
+        .status(404)
+        .json({ message: "Bunday foydalanuvchi topilmadi." });
     } else {
       return res.status(200).json(results);
     }
@@ -378,12 +420,11 @@ export async function deleteUser(req, res) {
     }
     const result = await userModel.destroy({ where: { user_id: id } });
 
-    if(result){
-     return res.status(200).send({ result });
-    }else {
+    if (result) {
+      return res.status(200).send({ result });
+    } else {
       return res.status(404).send({ result });
     }
-
   } catch (err) {
     res
       .status(500)
