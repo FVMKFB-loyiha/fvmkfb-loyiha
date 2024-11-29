@@ -21,16 +21,18 @@ async function connectToDb() {
         attempt: retries,
         error: err.message,
         stack: err.stack,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
       if (retries === maxRetries) {
-        console.error("Maximum database connection retries reached. Exiting...");
+        console.error(
+          "Maximum database connection retries reached. Exiting..."
+        );
         throw new Error("Failed to connect to database after maximum retries");
       }
 
-      console.log(`Retrying connection in ${retryDelay/1000} seconds...`);
-      await new Promise(resolve => setTimeout(resolve, retryDelay));
+      console.log(`Retrying connection in ${retryDelay / 1000} seconds...`);
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
     }
   }
 }
