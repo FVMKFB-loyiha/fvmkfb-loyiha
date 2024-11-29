@@ -34,6 +34,18 @@ app.use("/user", userRouter);
 app.use("/task", taskRouter);
 app.use("/user_task", userTaskRouter);
 
+// CORS sozlamalarini qo'shish
+import cors from "cors";
+
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST", "PATCH", "DELETE"],
+    credentials: true,
+  })
+);
+app.use(cors());
+
 // Swagger API documentationni ulash
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
