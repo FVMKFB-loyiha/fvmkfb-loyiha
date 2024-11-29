@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import {
   addTaskValidator,
   getTaskValidator,
@@ -18,6 +19,7 @@ export async function addTask(req, res) {
     }
 
     const userRole = req.user?.role;
+    console.log(chalk.redBright(userRole));
     if (userRole !== "admin") {
       return res
         .status(403)

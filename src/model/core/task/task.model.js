@@ -5,7 +5,7 @@ const tasksModel = sequelize.define("tasks", {
   tasks_id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
-    autoIncrement: true
+    autoIncrement: true,
   },
 
   title: {
@@ -16,16 +16,22 @@ const tasksModel = sequelize.define("tasks", {
   comment: {
     type: DataTypes.TEXT,
     allowNull: true,
+    defaultValue: "Qo'shimcha izoh yoq",
   },
 
   file: {
     type: DataTypes.STRING,
-    allowNull: true
+    allowNull: true,
   },
 
   status: {
-    type: DataTypes.ENUM('kutilmoqda','jarayonda', 'bajarildi', 'bekor qilindi'),
-    defaultValue: 'kutilmoqda',
+    type: DataTypes.ENUM(
+      "yuborildi",
+      "jarayonda",
+      "bajarildi",
+      "bekor qilindi"
+    ),
+    defaultValue: "yuborildi",
     allowNull: true,
   },
 });
