@@ -102,6 +102,21 @@ export async function registerUser(req, res) {
   }
 }
 
+export async function userFamilyInfo(req, res) {
+  const familyInfo = req.body;
+
+  if (!Array.isArray(familyInfo)) {
+    return res.json({
+      success: false,
+      message: "Invalid data format, send it in json format!",
+    });
+  }
+
+  
+
+
+}
+
 // login user ✅
 export async function loginUser(req, res) {
   try {
