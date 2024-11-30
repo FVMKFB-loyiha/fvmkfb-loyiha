@@ -6,7 +6,7 @@ export const addTaskValidator = Joi.object({
 });
 
 export const getTaskValidator = Joi.object({
-    tasks_id: Joi.number()
+    task_id: Joi.number()
   .integer()
   .positive()
   .required(),

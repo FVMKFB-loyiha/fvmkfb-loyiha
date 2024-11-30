@@ -1,44 +1,62 @@
-import chalk from "chalk";
 import {
   addTaskValidator,
   getTaskValidator,
   updateTaskValidator,
 } from "../../validator/taskValidator.js";
 import userModel from "../user/user.model.js";
-import eduModel from "../user/userEdu.model.js";
+// import eduModel from "../user/userEdu.model.js";
 // import { readFromFile, writeToFile } from "../user/user.service.js";
 import tasksModel from "./task.model.js";
+import taskEmployesModel from "./taskEmployees.model.js";
+
 
 // add Task ✅
 export async function addTask(req, res) {
   try {
-    const { title, status } = req.body;
+    const { title, status } = req.body; // `title` va `status`ni olish
+    let { user_id } = req.body; // Hodimlarning IDlari form-data orqali keladi
+
+    console.log("Kelgan ma'lumotlar:", req.body);
 
     if (!req.file) {
       return res.status(400).send("Fayl yuklanmadi");
     }
 
     const userRole = req.user?.role;
-    console.log(chalk.redBright(userRole));
     if (userRole !== "admin") {
-      return res
-        .status(403)
-        .send("Yangi vazifani faqat admin qo'shishi mumkin!");
+      return res.status(403).send("Yangi vazifani faqat admin qo'shishi mumkin!");
     }
 
-    console.log("Yangi vazifa ma'lumotlari:", { title, status, userRole });
-
-    // Validatsiya
-    const { error } = addTaskValidator.validate({ title, status });
-    if (error) {
-      console.log("Validatsiya xatoligi:", error.details[0].message);
-      return res.status(400).send(error.details[0].message);
+    // `user_id`ni massivga aylantirish (agar kerak bo'lsa)
+    if (typeof user_id === "string") {
+      try {
+        user_id = JSON.parse(user_id); // Stringni massivga aylantirish
+      } catch (error) {
+        return res.status(400).send("Hodimlarning IDlari noto'g'ri formatda yuborilgan.");
+      }
     }
 
-    // Fayl manzilini qo'shish
+    if (!user_id || !Array.isArray(user_id) || user_id.length === 0) {
+      return res.status(400).send("Topshiriqqa hech bo'lmaganda bitta hodim tanlang.");
+    }
+
+    console.log("Tanlangan hodimlar IDlari:", user_id);
+
+    // Hodimlarning mavjudligini tekshirish
+    const employees = await userModel.findAll({
+      where: {
+        user_id: user_id,
+      },
+    });
+
+    if (employees.length !== user_id.length) {
+      return res.status(400).send("Ba'zi tanlangan hodimlar mavjud emas yoki noto'g'ri.");
+    }
+
+    // Fayl manzilini olish
     const filePath = req.file.destination + req.file.filename;
 
-    // Ma'lumotlarni bazaga yozish uchun tayyorlash
+    // Yangi vazifani yaratish
     const newTask = {
       title,
       status,
@@ -47,14 +65,18 @@ export async function addTask(req, res) {
 
     const result = await tasksModel.create(newTask);
 
-    res
-      .status(201)
-      .send({ message: "Ma'lumotlar muvaffaqiyatli qo'shildi", result });
+    // Vazifani hodimlar bilan bog'lash
+    const taskAssignments = user_id.map((user_id) => ({
+      tasks_id: result.task_id,
+      user_id: user_id,
+    }));
+
+    await taskEmployesModel.bulkCreate(taskAssignments);
+
+    res.status(201).send({ message: "Ma'lumotlar muvaffaqiyatli qo'shildi", result });
   } catch (err) {
     console.log("TASK XATOLIGI=> ", err);
-    res
-      .status(500)
-      .send("Yangi vazifa qo'shishda xatolik bo'ldi: " + err.message);
+    res.status(500).send("Yangi vazifa qo'shishda xatolik bo'ldi: " + err.message);
   }
 }
 
@@ -187,7 +209,7 @@ export async function getAllTask(req, res) {
       limit,
       offset,
       attributes: [
-        "title", "status"
+        "title", "comment", "status"
       ],
       include: [
         {
