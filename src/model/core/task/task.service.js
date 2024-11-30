@@ -67,7 +67,7 @@ export async function addTask(req, res) {
 
     // Vazifani hodimlar bilan bog'lash
     const taskAssignments = user_id.map((user_id) => ({
-      tasks_id: result.task_id,
+      task_id: result.task_id,
       user_id: user_id,
     }));
 
@@ -202,15 +202,47 @@ export async function handleTaskCompletion(req, res) {
 
 export async function getAllTask(req, res) {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, status = "barchasi" } = req.query; // Status va pagination uchun query parametrlar
     const offset = (page - 1) * limit;
 
+    // Foydalanuvchi ma'lumotlarini olish (req.user dan keladi deb hisoblaymiz)
+    const userRole = req.user?.role; // admin yoki hodim
+    const userId = req.user?.user_id;
+
+    // Filtr parametrlarini tayyorlash
+    const whereClause = {};
+
+    if (userRole === "admin") {
+      // Admin barcha topshiriqlarni statusga qarab ko'rishi mumkin
+      if (status === "jarayonda") {
+        whereClause.status = "jarayonda";
+      } else if (status === "bajarildi") {
+        whereClause.status = "bajarildi";
+      }
+      // "barchasi" uchun hech qanday status filtr qo'llanmaydi (hamma topshiriqlar)
+    } else if (userRole === "hodim") {
+      // Hodim faqat o'ziga tegishli topshiriqlarni ko'rishi mumkin
+      whereClause.task_id = userId;
+
+      if (status === "bajarilgan topshiriqlar") {
+        whereClause.status = "bajarildi";
+      } else if (status === "bekor qilingan topshiriqlar") {
+        whereClause.status = "bekor_qilindi";
+      }
+      // "barcha topshiriqlar" uchun hech qanday status filtr qo'llanmaydi
+    } else {
+      return res.status(403).send({
+        error: "Ruxsat berilmagan",
+        message: "Siz bu ma'lumotlarga kirish huquqiga ega emassiz",
+      });
+    }
+
+    // So'rovni ma'lumotlar bazasidan olish
     const result = await tasksModel.findAll({
+      where: whereClause,
       limit,
       offset,
-      attributes: [
-         "task_id" ,"title", "comment", "status"
-      ],
+      attributes: ["task_id", "title", "comment", "status"],
       include: [
         {
           model: userModel,
@@ -225,26 +257,77 @@ export async function getAllTask(req, res) {
             "position",
             "phone",
           ],
-        }
+        },
       ],
     });
 
-    const totalTAsks = await tasksModel.count();
+    // Umumiy topshiriqlar sonini hisoblash
+    const totalTasks = await tasksModel.count({ where: whereClause });
+    const totalPages = Math.ceil(totalTasks / limit);
 
-    const totalPages = Math.ceil(totalTAsks / limit);
-
+    // Natijani qaytarish
     res.status(200).send({
-      users: result,
+      tasks: result,
       totalPages,
       currentPage: page,
     });
   } catch (err) {
-    console.error("user xatoligi", err);
-    res
-      .status(500)
-      .send("Foydalanuvchilarni olishda xatolik yuz berdi: " + err.message);
+    console.error("Xatolik yuz berdi", err);
+    res.status(500).send({
+      error: "Serverda xatolik yuz berdi",
+      message: err.message,
+    });
   }
 }
+
+
+
+
+// export async function getAllTask(req, res) {
+//   try {
+//     const { page = 1, limit = 10 } = req.query;
+//     const offset = (page - 1) * limit;
+
+//     const result = await tasksModel.findAll({
+//       limit,
+//       offset,
+//       attributes: [
+//          "task_id" ,"title", "comment", "status"
+//       ],
+//       include: [
+//         {
+//           model: userModel,
+//           required: false,
+//           attributes: [
+//             "fullname",
+//             "email",
+//             "birth_date",
+//             "picture",
+//             "file",
+//             "department",
+//             "position",
+//             "phone",
+//           ],
+//         }
+//       ],
+//     });
+
+//     const totalTAsks = await tasksModel.count();
+
+//     const totalPages = Math.ceil(totalTAsks / limit);
+
+//     res.status(200).send({
+//       users: result,
+//       totalPages,
+//       currentPage: page,
+//     });
+//   } catch (err) {
+//     console.error("user xatoligi", err);
+//     res
+//       .status(500)
+//       .send("Foydalanuvchilarni olishda xatolik yuz berdi: " + err.message);
+//   }
+// }
 
 export async function updateTask(req, res) {
   try {

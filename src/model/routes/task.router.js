@@ -15,7 +15,7 @@ import authGuard from "../../common/guard/auth.guard.js";
 const taskRouter = Router();
 
 taskRouter
-  .get("/", getAllTask)
+  .get("/", authGuard ,getAllTask)
   .get("/:id", getTask)
   .post("/", authGuard ,fileDownloadMiddleware, addTask)
   .post("/status", authGuard ,handleXodimDecision)
