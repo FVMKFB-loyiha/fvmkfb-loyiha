@@ -119,7 +119,7 @@ export async function handleXodimDecision(req, res) {
 // xodim qabul qilingan vazifani qaytadan yuklashi✅
 export async function handleTaskCompletion(req, res) {
   try {
-    const { tasks_id, comment} = req.body;
+    const { tasks_id, comment } = req.body;
 
     console.log("hande task completion body=>", req.body);
     console.log("hande task completion file=>", req.file);
@@ -177,7 +177,6 @@ export async function handleTaskCompletion(req, res) {
   }
 }
 
-
 export async function getAllTask(req, res) {
   try {
     const { page = 1, limit = 10 } = req.query;
@@ -186,9 +185,7 @@ export async function getAllTask(req, res) {
     const result = await tasksModel.findAll({
       limit,
       offset,
-      attributes: [
-        "title", "status"
-      ],
+      attributes: ["title", "status"],
       include: [
         {
           model: userModel,
@@ -203,7 +200,7 @@ export async function getAllTask(req, res) {
             "position",
             "phone",
           ],
-        }
+        },
       ],
     });
 
