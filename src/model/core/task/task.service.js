@@ -3,11 +3,11 @@ import {
   getTaskValidator,
   updateTaskValidator,
 } from "../../validator/taskValidator.js";
+import { user_taskModel } from "../index.js";
 import userModel from "../user/user.model.js";
 // import eduModel from "../user/userEdu.model.js";
 // import { readFromFile, writeToFile } from "../user/user.service.js";
 import tasksModel from "./task.model.js";
-import taskEmployesModel from "./taskEmployees.model.js";
 
 
 // add Task ✅
@@ -71,7 +71,7 @@ export async function addTask(req, res) {
       user_id: user_id,
     }));
 
-    await taskEmployesModel.bulkCreate(taskAssignments);
+    await user_taskModel.bulkCreate(taskAssignments);
 
     res.status(201).send({ message: "Ma'lumotlar muvaffaqiyatli qo'shildi", result });
   } catch (err) {
@@ -83,13 +83,13 @@ export async function addTask(req, res) {
 // hodim vazifani qabul qilishi✅
 export async function handleXodimDecision(req, res) {
   try {
-    const { tasks_id, status } = req.body;
+    const { task_id, status } = req.body;
 
     // Validatsiya qilish
-    if (!tasks_id || !status) {
+    if (!task_id || !status) {
       return res
         .status(400)
-        .send("tasks_id va status maydonlarini kiritish majburiy.");
+        .send("task_id va status maydonlarini kiritish majburiy.");
     }
 
     // Faqat "accept" yoki "reject" statuslarini qabul qilish
@@ -102,14 +102,14 @@ export async function handleXodimDecision(req, res) {
     }
 
     // Bazadan vazifa ma'lumotlarini olish
-    const task = await tasksModel.findOne({ where: { tasks_id } });
+    const task = await tasksModel.findOne({ where: { task_id } });
 
     if (!task) {
       return res.status(404).send("Bunday vazifa topilmadi.");
     }
 
     // Holatni tekshirish: Faqat "kutilmoqda" yoki "jarayonda" holatida o'zgarishi mumkin
-    if (!["kutilmoqda", "jarayonda"].includes(task.status)) {
+    if (!["yuborildi", "jarayonda"].includes(task.status)) {
       return res
         .status(400)
         .send("Bu vazifa holatini o'zgartirishga ruxsat yo'q.");
@@ -123,7 +123,7 @@ export async function handleXodimDecision(req, res) {
     // Statusni yangilash
     const newStatus = status === "accept" ? "jarayonda" : "bekor qilindi";
 
-    await tasksModel.update({ status: newStatus }, { where: { tasks_id } });
+    await tasksModel.update({ status: newStatus }, { where: { task_id } });
 
     // Javob qaytarish
     res.status(200).send({
@@ -141,20 +141,20 @@ export async function handleXodimDecision(req, res) {
 // xodim qabul qilingan vazifani qaytadan yuklashi✅
 export async function handleTaskCompletion(req, res) {
   try {
-    const { tasks_id, comment} = req.body;
+    const { task_id, comment} = req.body;
 
     console.log("hande task completion body=>", req.body);
     console.log("hande task completion file=>", req.file);
 
     // Validatsiya qilish
-    if (!tasks_id || !comment === 0) {
+    if (!task_id || !comment === 0) {
       return res
         .status(400)
-        .send("tasks_id, comment maydonlarini kiritish majburiy.");
+        .send("task_id, comment maydonlarini kiritish majburiy.");
     }
 
     // Bazadan vazifa ma'lumotlarini olish
-    const task = await tasksModel.findOne({ where: { tasks_id } });
+    const task = await tasksModel.findOne({ where: { task_id } });
 
     if (!task) {
       return res.status(404).send("Bunday vazifa topilmadi.");
@@ -182,7 +182,7 @@ export async function handleTaskCompletion(req, res) {
         filePath,
         comment, // Izohni saqlash
       },
-      { where: { tasks_id } }
+      { where: { task_id } }
     );
 
     res.status(200).send({
@@ -209,7 +209,7 @@ export async function getAllTask(req, res) {
       limit,
       offset,
       attributes: [
-        "title", "comment", "status"
+         "task_id" ,"title", "comment", "status"
       ],
       include: [
         {

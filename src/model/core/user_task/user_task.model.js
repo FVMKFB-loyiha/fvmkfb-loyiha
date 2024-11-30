@@ -23,7 +23,7 @@ const userTaskModel = sequelize.define("user_tasks", {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      key: "tasks_id",
+      key: "task_id",
       model: tasksModel,
     },
   },
