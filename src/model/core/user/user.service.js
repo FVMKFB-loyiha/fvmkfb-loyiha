@@ -287,6 +287,7 @@ export async function getAllUser(req, res) {
       limit,
       offset,
       attributes: [
+        "user_id",
         "fullname",
         "email",
         "birth_date",

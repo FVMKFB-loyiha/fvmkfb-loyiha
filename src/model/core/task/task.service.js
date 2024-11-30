@@ -1,44 +1,69 @@
-import chalk from "chalk";
 import {
   addTaskValidator,
   getTaskValidator,
   updateTaskValidator,
 } from "../../validator/taskValidator.js";
+import { user_taskModel } from "../index.js";
 import userModel from "../user/user.model.js";
-import eduModel from "../user/userEdu.model.js";
+// import eduModel from "../user/userEdu.model.js";
 // import { readFromFile, writeToFile } from "../user/user.service.js";
 import tasksModel from "./task.model.js";
 
 // add Task ✅
 export async function addTask(req, res) {
   try {
-    const { title, status } = req.body;
+    const { title, status } = req.body; // `title` va `status`ni olish
+    let { user_id } = req.body; // Hodimlarning IDlari form-data orqali keladi
+
+    console.log("Kelgan ma'lumotlar:", req.body);
 
     if (!req.file) {
       return res.status(400).send("Fayl yuklanmadi");
     }
 
     const userRole = req.user?.role;
-    console.log(chalk.redBright(userRole));
     if (userRole !== "admin") {
       return res
         .status(403)
         .send("Yangi vazifani faqat admin qo'shishi mumkin!");
     }
 
-    console.log("Yangi vazifa ma'lumotlari:", { title, status, userRole });
-
-    // Validatsiya
-    const { error } = addTaskValidator.validate({ title, status });
-    if (error) {
-      console.log("Validatsiya xatoligi:", error.details[0].message);
-      return res.status(400).send(error.details[0].message);
+    // `user_id`ni massivga aylantirish (agar kerak bo'lsa)
+    if (typeof user_id === "string") {
+      try {
+        user_id = JSON.parse(user_id); // Stringni massivga aylantirish
+      } catch (error) {
+        return res
+          .status(400)
+          .send("Hodimlarning IDlari noto'g'ri formatda yuborilgan.");
+      }
     }
 
-    // Fayl manzilini qo'shish
+    if (!user_id || !Array.isArray(user_id) || user_id.length === 0) {
+      return res
+        .status(400)
+        .send("Topshiriqqa hech bo'lmaganda bitta hodim tanlang.");
+    }
+
+    console.log("Tanlangan hodimlar IDlari:", user_id);
+
+    // Hodimlarning mavjudligini tekshirish
+    const employees = await userModel.findAll({
+      where: {
+        user_id: user_id,
+      },
+    });
+
+    if (employees.length !== user_id.length) {
+      return res
+        .status(400)
+        .send("Ba'zi tanlangan hodimlar mavjud emas yoki noto'g'ri.");
+    }
+
+    // Fayl manzilini olish
     const filePath = req.file.destination + req.file.filename;
 
-    // Ma'lumotlarni bazaga yozish uchun tayyorlash
+    // Yangi vazifani yaratish
     const newTask = {
       title,
       status,
@@ -46,6 +71,14 @@ export async function addTask(req, res) {
     };
 
     const result = await tasksModel.create(newTask);
+
+    // Vazifani hodimlar bilan bog'lash
+    const taskAssignments = user_id.map((user_id) => ({
+      tasks_id: result.task_id,
+      user_id: user_id,
+    }));
+
+    await user_taskModel.bulkCreate(taskAssignments);
 
     res
       .status(201)
@@ -61,13 +94,13 @@ export async function addTask(req, res) {
 // hodim vazifani qabul qilishi✅
 export async function handleXodimDecision(req, res) {
   try {
-    const { tasks_id, status } = req.body;
+    const { task_id, status } = req.body;
 
     // Validatsiya qilish
-    if (!tasks_id || !status) {
+    if (!task_id || !status) {
       return res
         .status(400)
-        .send("tasks_id va status maydonlarini kiritish majburiy.");
+        .send("task_id va status maydonlarini kiritish majburiy.");
     }
 
     // Faqat "accept" yoki "reject" statuslarini qabul qilish
@@ -80,14 +113,14 @@ export async function handleXodimDecision(req, res) {
     }
 
     // Bazadan vazifa ma'lumotlarini olish
-    const task = await tasksModel.findOne({ where: { tasks_id } });
+    const task = await tasksModel.findOne({ where: { task_id } });
 
     if (!task) {
       return res.status(404).send("Bunday vazifa topilmadi.");
     }
 
     // Holatni tekshirish: Faqat "kutilmoqda" yoki "jarayonda" holatida o'zgarishi mumkin
-    if (!["kutilmoqda", "jarayonda"].includes(task.status)) {
+    if (!["yuborildi", "jarayonda"].includes(task.status)) {
       return res
         .status(400)
         .send("Bu vazifa holatini o'zgartirishga ruxsat yo'q.");
@@ -101,7 +134,7 @@ export async function handleXodimDecision(req, res) {
     // Statusni yangilash
     const newStatus = status === "accept" ? "jarayonda" : "bekor qilindi";
 
-    await tasksModel.update({ status: newStatus }, { where: { tasks_id } });
+    await tasksModel.update({ status: newStatus }, { where: { task_id } });
 
     // Javob qaytarish
     res.status(200).send({
@@ -119,20 +152,20 @@ export async function handleXodimDecision(req, res) {
 // xodim qabul qilingan vazifani qaytadan yuklashi✅
 export async function handleTaskCompletion(req, res) {
   try {
-    const { tasks_id, comment } = req.body;
+    const { task_id, comment} = req.body;
 
     console.log("hande task completion body=>", req.body);
     console.log("hande task completion file=>", req.file);
 
     // Validatsiya qilish
-    if (!tasks_id || !comment === 0) {
+    if (!task_id || !comment === 0) {
       return res
         .status(400)
-        .send("tasks_id, comment maydonlarini kiritish majburiy.");
+        .send("task_id, comment maydonlarini kiritish majburiy.");
     }
 
     // Bazadan vazifa ma'lumotlarini olish
-    const task = await tasksModel.findOne({ where: { tasks_id } });
+    const task = await tasksModel.findOne({ where: { task_id } });
 
     if (!task) {
       return res.status(404).send("Bunday vazifa topilmadi.");
@@ -160,7 +193,7 @@ export async function handleTaskCompletion(req, res) {
         filePath,
         comment, // Izohni saqlash
       },
-      { where: { tasks_id } }
+      { where: { task_id } }
     );
 
     res.status(200).send({
@@ -185,7 +218,7 @@ export async function getAllTask(req, res) {
     const result = await tasksModel.findAll({
       limit,
       offset,
-      attributes: ["title", "status"],
+      attributes: ["task_id", "title", "comment", "status"],
       include: [
         {
           model: userModel,

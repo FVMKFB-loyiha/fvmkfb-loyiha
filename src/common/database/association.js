@@ -15,7 +15,7 @@ function setupModels() {
   });
 
   // eduModel definition
-  
+
   userModel.hasMany(eduModel, { foreignKey: "user_id" });
   eduModel.belongsTo(userModel, { foreignKey: "user_id" });
 
@@ -31,7 +31,7 @@ function setupModels() {
 
   // One-to-Many: tasksModel va user_taskModel o'rtasida bog'lanish
   tasksModel.hasMany(user_taskModel, { foreignKey: "task_id" });
-  user_taskModel.belongsTo(tasksModel, { foreignKey: "task_id" });
+  user_taskModel.belongsTo(tasksModel, { foreignKey: "tasks_id" });
 
   // One-to-Many: userModel va notificationModel o'rtasida bog'lanish
   userModel.hasMany(notificationModel, { foreignKey: "user_id" });
