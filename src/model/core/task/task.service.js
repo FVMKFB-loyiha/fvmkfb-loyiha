@@ -8,86 +8,79 @@ import userModel from "../user/user.model.js";
 // import eduModel from "../user/userEdu.model.js";
 // import { readFromFile, writeToFile } from "../user/user.service.js";
 import tasksModel from "./task.model.js";
+import * as socketConfig from "../../../common/config/socket.io.config.js";
 
 // add Task ✅
-export async function addTask(req, res) {
+export async function addTask(req) {
   try {
-    const { title, status } = req.body; // `title` va `status`ni olish
-    let { user_id } = req.body; // Hodimlarning IDlari form-data orqali keladi
+    const { title, status } = req.body;
+    let { user_id } = req.body;
 
-    console.log("Kelgan ma'lumotlar:", req.body);
-
+    // Faylni tekshirish
     if (!req.file) {
-      return res.status(400).send("Fayl yuklanmadi");
+      throw new Error("Fayl yuklanmadi");
     }
 
+    // Ruxsatni tekshirish
     const userRole = req.user?.role;
+    console.log("User role:", userRole);
     if (userRole !== "admin") {
-      return res
-        .status(403)
-        .send("Yangi vazifani faqat admin qo'shishi mumkin!");
+      throw new Error("Yangi vazifani faqat admin qo'shishi mumkin!");
     }
 
-    // `user_id`ni massivga aylantirish (agar kerak bo'lsa)
+    // user_id ni massivga o'tkazish
     if (typeof user_id === "string") {
       try {
-        user_id = JSON.parse(user_id); // Stringni massivga aylantirish
+        user_id = JSON.parse(user_id);
       } catch (error) {
-        return res
-          .status(400)
-          .send("Hodimlarning IDlari noto'g'ri formatda yuborilgan.");
+        throw new Error("Hodimlarning IDlari noto'g'ri formatda yuborilgan.");
       }
     }
 
     if (!user_id || !Array.isArray(user_id) || user_id.length === 0) {
-      return res
-        .status(400)
-        .send("Topshiriqqa hech bo'lmaganda bitta hodim tanlang.");
+      throw new Error("Topshiriqqa hech bo'lmaganda bitta hodim tanlang.");
     }
 
-    console.log("Tanlangan hodimlar IDlari:", user_id);
-
-    // Hodimlarning mavjudligini tekshirish
-    const employees = await userModel.findAll({
-      where: {
-        user_id: user_id,
-      },
-    });
-
-    if (employees.length !== user_id.length) {
-      return res
-        .status(400)
-        .send("Ba'zi tanlangan hodimlar mavjud emas yoki noto'g'ri.");
-    }
-
-    // Fayl manzilini olish
+    // Fayl yo'li
     const filePath = req.file.destination + req.file.filename;
 
-    // Yangi vazifani yaratish
+    // Yangi vazifa yaratish
     const newTask = {
       title,
       status,
       file: filePath,
     };
 
-    const result = await tasksModel.create(newTask);
+    // Tranzaksiya boshlanishi
+    const transaction = await tasksModel.sequelize.transaction();
 
-    // Vazifani hodimlar bilan bog'lash
-    const taskAssignments = user_id.map((user_id) => ({
-      tasks_id: result.task_id,
-      user_id: user_id,
-    }));
+    try {
+      const result = await tasksModel.create(newTask, { transaction });
+      console.log("Created task:", result.toJSON());
 
-    await user_taskModel.bulkCreate(taskAssignments);
+      // Vazifani foydalanuvchilarga biriktirish
+      const taskAssignments = user_id.map((userId) => ({
+        task_id: result.dataValues.task_id,
+        user_id: userId,
+      }));
 
-    res
-      .status(201)
-      .send({ message: "Ma'lumotlar muvaffaqiyatli qo'shildi", result });
+      console.log("Task assignments to create:", taskAssignments);
+
+      await user_taskModel.bulkCreate(taskAssignments, { transaction });
+
+      // Tranzaksiyani tasdiqlash
+      await transaction.commit();
+      return result;
+
+    } catch (err) {
+      // Xatolik bo'lsa tranzaksiyani bekor qilish
+      await transaction.rollback();
+      throw err;
+    }
+
   } catch (err) {
-    console.log("TASK XATOLIGI=> ", err);
-    res
-      .status(500)
-      .send("Yangi vazifa qo'shishda xatolik bo'ldi: " + err.message);
+    console.error("Task creation error:", err);
+    throw err;
   }
 }
 
@@ -152,7 +145,7 @@ export async function handleXodimDecision(req, res) {
 // xodim qabul qilingan vazifani qaytadan yuklashi✅
 export async function handleTaskCompletion(req, res) {
   try {
-    const { task_id, comment} = req.body;
+    const { task_id, comment } = req.body;
 
     console.log("hande task completion body=>", req.body);
     console.log("hande task completion file=>", req.file);
