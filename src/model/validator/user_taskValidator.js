@@ -12,7 +12,7 @@ export const addUser_taskValidator = Joi.object({
 });
 
 export const getUser_taskValidator = Joi.object({
-    userTask_id: Joi.number()
+    id: Joi.number()
   .integer()
   .positive()
   .required(),

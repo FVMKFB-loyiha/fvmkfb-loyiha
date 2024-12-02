@@ -1,15 +1,14 @@
 import Joi from "joi";
 
 export const addTaskValidator = Joi.object({
-  title: Joi.string(),
-  status: Joi.string(),
+  title: Joi.string().required(),
+  status: Joi.string().required(),
 });
 
 export const getTaskValidator = Joi.object({
-    task_id: Joi.number()
-  .integer()
-  .positive()
-  .required(),
+  id: Joi.string()
+    .pattern(/^[0-9]+$/)
+    .required(),
 });
 
 export const updateTaskValidator = Joi.object({

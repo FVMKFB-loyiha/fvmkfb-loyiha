@@ -376,6 +376,7 @@ export async function updateUser(req, res) {
     // Handle picture update
     let newPicture = oldDataUser.picture; // Default to old picture
     let newFile = oldDataUser.file; // Default to old file path
+    
     if (req.file) {
       // Delete old picture if it exists and is not the default
       if (oldDataUser.picture && oldDataUser.picture !== "default-ava.png") {
@@ -426,11 +427,8 @@ export async function updateUser(req, res) {
       where: { user_id: id },
     });
 
-    if (!updatedUser) {
-      return res.status(404).send("Bunday ID'lik foydalanuchi topilmadi!");
-    }
 
-    res.json(updatedUser);
+   res.json(updatedUser);
   } catch (err) {
     console.log(err);
     res.status(500).json(err.message);
