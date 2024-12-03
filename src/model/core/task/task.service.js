@@ -8,27 +8,27 @@ import userModel from "../user/user.model.js";
 import tasksModel from "./task.model.js";
 import fs from "fs";
 import path from "path";
-import * as socketConfig from "../../../common/config/socket.io.config.js";
+// import * as socketConfig from "../../../common/config/socket.io.config.js";
 
 // add Task ✅
-export async function addTask(req) {
+
+export async function addTask(req, res) {
+  let transaction; // Tranzaksiya global scope'da e'lon qilindi
+
   try {
     const { title, status } = req.body;
     let { user_id } = req.body;
 
-    // Faylni tekshirish
     if (!req.file) {
       throw new Error("Fayl yuklanmadi");
     }
 
-    // Ruxsatni tekshirish
     const userRole = req.user?.role;
     console.log("User role:", userRole);
     if (userRole !== "admin") {
       throw new Error("Yangi vazifani faqat admin qo'shishi mumkin!");
     }
 
-    // user_id ni massivga o'tkazish
     if (typeof user_id === "string") {
       try {
         user_id = JSON.parse(user_id);
@@ -41,47 +41,41 @@ export async function addTask(req) {
       throw new Error("Topshiriqqa hech bo'lmaganda bitta hodim tanlang.");
     }
 
-    // Fayl yo'li
     const filePath = req.file.destination + req.file.filename;
 
-    // Yangi vazifa yaratish
     const newTask = {
       title,
       status,
       file: filePath,
     };
 
-    // Tranzaksiya boshlanishi
-    const transaction = await tasksModel.sequelize.transaction();
+    transaction = await tasksModel.sequelize.transaction(); // Tranzaksiya yaratish
 
-    // Vazifani hodimlar bilan bog'lash
-    const taskAssignments = user_id.map((user_id) => ({
-      task_id: result.task_id,
-      user_id: user_id,
+    const result = await tasksModel.create(newTask, { transaction });
+
+    console.log("Created task:", result.toJSON());
+
+    const taskAssignments = user_id.map((userId) => ({
+      task_id: result.dataValues.task_id,
+      user_id: userId,
     }));
-//{ transaction }
-    try {
-      const result = await tasksModel.create(newTask, taskAssignments);
-      console.log("Created task:", result.toJSON());
 
+    console.log("Task assignments to create:", taskAssignments);
 
-      console.log("Task assignments to create:", taskAssignments);
+    await user_taskModel.bulkCreate(taskAssignments, { transaction });
 
-      await user_taskModel.bulkCreate(taskAssignments, { transaction });
-
-      // Tranzaksiyani tasdiqlash
-      await transaction.commit();
-      return result;
-
-    } catch (err) {
-      // Xatolik bo'lsa tranzaksiyani bekor qilish
-      await transaction.rollback();
-      throw err;
-    }
-
+    await transaction.commit(); // Tranzaksiya muvaffaqiyatli yakunlandi
+    return res.send(result); // Natija qaytariladi
   } catch (err) {
-    console.error("Task creation error:", err);
-    throw err;
+    if (transaction) {
+      try {
+        await transaction.rollback(); // Faqat tranzaksiya mavjud bo'lsa rollback qilinadi
+      } catch (rollbackError) {
+        console.error("Rollback error:", rollbackError.message);
+      }
+    }
+    console.error("Xatolik yuz berdi:", err.message);
+    res.status(500).send({ error: err.message }); // Xatolikni qaytarish
   }
 }
 
@@ -215,6 +209,7 @@ export async function getAllTask(req, res) {
 
     // Filtr parametrlarini tayyorlash
     const whereClause = {};
+    const userTaskWhereClause = {};
 
     if (userRole === "admin") {
       // Admin barcha topshiriqlarni statusga qarab ko'rishi mumkin
@@ -223,15 +218,15 @@ export async function getAllTask(req, res) {
       } else if (status === "bajarildi") {
         whereClause.status = "bajarildi";
       }
-      // "barchasi" uchun hech qanday status filtr qo'llanmaydi (hamma topshiriqlar)
+      // "barchasi" uchun hech qanday status filtr qo'llanmaydi
     } else if (userRole === "hodim") {
       // Hodim faqat o'ziga tegishli topshiriqlarni ko'rishi mumkin
-      whereClause.task_id = userId;
+      userTaskWhereClause.user_id = userId;
 
-      if (status === "bajarilgan topshiriqlar") {
+      if (status === "bajarildi") {
         whereClause.status = "bajarildi";
-      } else if (status === "bekor qilingan topshiriqlar") {
-        whereClause.status = "bekor_qilindi";
+      } else if (status === "bekor qilindi") {
+        whereClause.status = "bekor qilindi";
       }
       // "barcha topshiriqlar" uchun hech qanday status filtr qo'llanmaydi
     } else {
@@ -262,11 +257,30 @@ export async function getAllTask(req, res) {
             "phone",
           ],
         },
+        {
+          model: user_taskModel, // Hodim va vazifa bog'lanishini tekshirish uchun
+          required: userRole === "hodim", // Hodim bo'lsa bu ulanish talab qilinadi
+          attributes: [],
+          where: userTaskWhereClause,
+        },
       ],
     });
 
     // Umumiy topshiriqlar sonini hisoblash
-    const totalTasks = await tasksModel.count({ where: whereClause });
+    const totalTasks = await tasksModel.count({
+      where: whereClause,
+      include:
+        userRole === "hodim"
+          ? [
+              {
+                model: user_taskModel,
+                required: true,
+                where: userTaskWhereClause,
+              },
+            ]
+          : [],
+    });
+
     const totalPages = Math.ceil(totalTasks / limit);
 
     // Natijani qaytarish
@@ -317,7 +331,9 @@ export async function updateTask(req, res) {
     const userRole = req.user?.role;
 
     if (userRole !== "admin") {
-      return res.status(403).send("Topshiriqni faqat admin tahrirlashi mumkin!");
+      return res
+        .status(403)
+        .send("Topshiriqni faqat admin tahrirlashi mumkin!");
     }
 
     const oldDataTask = await tasksModel.findOne({ where: { task_id: id } });
@@ -346,9 +362,15 @@ export async function updateTask(req, res) {
     }
 
     // Taskni yangilash
-    const result = await tasksModel.update(updatedTask, { where: { task_id: id } });
+    const result = await tasksModel.update(updatedTask, {
+      where: { task_id: id },
+    });
     if (result[0] === 0) {
-      return res.status(404).send("Bunday ID'dagi topshiriq topilmadi yoki o'zgartirishlar kiritilmadi!");
+      return res
+        .status(404)
+        .send(
+          "Bunday ID'dagi topshiriq topilmadi yoki o'zgartirishlar kiritilmadi!"
+        );
     }
 
     res.status(200).send("Topshiriq muvaffaqiyatli yangilandi!");
@@ -357,7 +379,6 @@ export async function updateTask(req, res) {
     res.status(500).send("Topshiriqni yangilashda xatolik: " + err.message);
   }
 }
-
 
 // export async function updateTask(req, res) {
 //   try {
@@ -374,7 +395,6 @@ export async function updateTask(req, res) {
 //       return res.status(404).send("Bunday ID'dagi topshiriq topilmadi!");
 //     }
 
-    
 //     if (req.file) {
 //       // Delete old picture if it exists and is not the default
 //       if (oldDataTask.file && oldDataTask.file !== "default-ava.png") {
@@ -423,7 +443,7 @@ export async function updateTask(req, res) {
 export async function deleteTask(req, res) {
   try {
     const { id } = req.params;
-    const userRole= req.user?.role;
+    const userRole = req.user?.role;
 
     if (userRole !== "admin") {
       return res.status(403).send("Topshiriqni faqat admin o'chirishi mumkin!");
@@ -434,7 +454,9 @@ export async function deleteTask(req, res) {
       return res.status(400).send(idError.details[0].message);
     }
 
-    const result = await tasksModel.destroy({ where: { task_id: parseInt(id) } });
+    const result = await tasksModel.destroy({
+      where: { task_id: parseInt(id) },
+    });
 
     if (!result) {
       return res.status(404).send("Bizda xali bunday Xona mavjud emas !");

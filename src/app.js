@@ -27,30 +27,6 @@ import { swaggerDoc, swaggerUi } from "./common/config/swagger.config.js";
 // socket.io-client ni import qilish
 import { io as socketIOClient } from "socket.io-client";
 
-// Mavjud importlarga qo'shamiz
-import multer from "multer";
-import path from "path";
-import fs from 'fs';
-import jwt from "jsonwebtoken";
-
-// Fayl yuklash uchun multer konfiguratsiyasi
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/tasks/'); // Bu papka mavjud bo'lishi kerak
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({ storage: storage });
-
-// Papkani tekshirish va yaratish
-const uploadDir = 'uploads/tasks';
-if (!fs.existsSync(uploadDir)){
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
 // // ------------------ APP --------------------- //
 
 const app = express();
@@ -95,63 +71,46 @@ app.use(cors());
 // Swagger API documentationni ulash
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
-// JWT middleware
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
 
-  if (!token) {
-    return res.status(401).send('Token topilmadi');
-  }
+// app.post("/send-task", authenticateToken, upload.single('file'), async (req, res) => {
+//   try {
+//     const result = await addTask(req);
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.status(403).send('Token yaroqsiz');
-    }
-    req.user = user;
-    next();
-  });
-};
-
-app.post("/send-task", authenticateToken, upload.single('file'), async (req, res) => {
-  try {
-    const result = await addTask(req);
-
-    // user_id ni massivga o'tkazish
-    let user_id = req.body.user_id;
-    if (typeof user_id === 'string') {
-      try {
-        user_id = JSON.parse(user_id);
-      } catch (error) {
-        throw new Error("user_id noto'g'ri formatda");
-      }
-    }
+//     // user_id ni massivga o'tkazish
+//     let user_id = req.body.user_id;
+//     if (typeof user_id === 'string') {
+//       try {
+//         user_id = JSON.parse(user_id);
+//       } catch (error) {
+//         throw new Error("user_id noto'g'ri formatda");
+//       }
+//     }
     
-    // Har bir foydalanuvchiga bildirishnoma yuborish
-    if (Array.isArray(user_id)) {
-      user_id.forEach((userId) => {
-        const userSocketId = socketConfig.getConnectedUsers()[userId];
-        if (userSocketId) {
-          socketConfig.getIO().to(userSocketId).emit("task_notification", {
-            task: {
-              id: result.task_id,
-              title: req.body.title,
-              status: req.body.status
-            },
-          });
-          console.log(`Task notification sent to user ${userId}`);
-        } else {
-          console.log(`User ${userId} is not connected`);
-        }
-      });
-    }
+//     // Har bir foydalanuvchiga bildirishnoma yuborish
+//     if (Array.isArray(user_id)) {
+//       user_id.forEach((userId) => {
+//         const userSocketId = socketConfig.getConnectedUsers()[userId];
+//         if (userSocketId) {
+//           socketConfig.getIO().to(userSocketId).emit("task_notification", {
+//             task: {
+//               id: result.task_id,
+//               title: req.body.title,
+//               status: req.body.status
+//             },
+//           });
+//           console.log(`Task notification sent to user ${userId}`);
+//         } else {
+//           console.log(`User ${userId} is not connected`);
+//         }
+//       });
+//     }
 
-    res.status(200).send("Task assigned and notifications sent successfully!");
-  } catch (err) {
-    console.error("Error assigning task:", err);
-    res.status(500).send("Internal server error: " + err.message);
-  }
-});
+//     res.status(200).send("Task assigned and notifications sent successfully!");
+//   } catch (err) {
+//     console.error("Error assigning task:", err);
+//     res.status(500).send("Internal server error: " + err.message);
+//   }
+// });
 
 // Ma'lumotlar bazasi bilan ulanish
 (async () => {
