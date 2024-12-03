@@ -8,21 +8,68 @@ import {
   taskRouter,
 } from "./model/routes/index.js";
 
-// mongoose config ulash
-import { client } from "./common/database/config.js";
+import { addTask } from "./model/core/task/task.service.js";
+// import { tasksModel } from "./model/core/index.js";
 
-// swagger configni'ni chaqirish
+// mongoose config ulash
+// import { client } from "./common/database/config.js";
 
 // socket.io config chaqirish
-// import { initSocket } from "./common/config/socket.io.config.js";
-// import http from "http";
+import * as socketConfig from "./common/config/socket.io.config.js";
+import http from "http";
 
+// cookie parser
 import cookieParser from "cookie-parser";
+
+// swagger configni'ni chaqirish
 import { swaggerDoc, swaggerUi } from "./common/config/swagger.config.js";
+
+// socket.io-client ni import qilish
+import { io as socketIOClient } from "socket.io-client";
+
+// Mavjud importlarga qo'shamiz
+import multer from "multer";
+import path from "path";
+import fs from 'fs';
+import jwt from "jsonwebtoken";
+
+// Fayl yuklash uchun multer konfiguratsiyasi
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/tasks/'); // Bu papka mavjud bo'lishi kerak
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
+
+// Papkani tekshirish va yaratish
+const uploadDir = 'uploads/tasks';
+if (!fs.existsSync(uploadDir)){
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // // ------------------ APP --------------------- //
 
 const app = express();
+const server = http.createServer(app);
+const io = socketConfig.init(server);
+const socket = socketIOClient("http://localhost:3000");
+
+socket.on("connect", () => {
+  console.log("Foydalanuvchi ulandi, socket id:", socket.id);
+  socket.emit("user_connected", "user1"); // yoki foydalanuvchi IDni yuboring
+});
+
+// Notificationni qabul qilish:
+socket.on("task_assigned", (data) => {
+  console.log("Task notification:", data);
+  // Popupni ko'rsatish yoki boshqa ishlov berish
+});
+
+// Socket.io konfiguratsiyasini ishga tushirish
 
 // Middleware'larni ulash
 app.use(express.json());
@@ -36,7 +83,6 @@ app.use("/user_task", userTaskRouter);
 
 // CORS sozlamalarini qo'shish
 import cors from "cors";
-
 app.use(
   cors({
     origin: "http://localhost:5173",
@@ -48,6 +94,64 @@ app.use(cors());
 
 // Swagger API documentationni ulash
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+
+// JWT middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).send('Token topilmadi');
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).send('Token yaroqsiz');
+    }
+    req.user = user;
+    next();
+  });
+};
+
+app.post("/send-task", authenticateToken, upload.single('file'), async (req, res) => {
+  try {
+    const result = await addTask(req);
+
+    // user_id ni massivga o'tkazish
+    let user_id = req.body.user_id;
+    if (typeof user_id === 'string') {
+      try {
+        user_id = JSON.parse(user_id);
+      } catch (error) {
+        throw new Error("user_id noto'g'ri formatda");
+      }
+    }
+    
+    // Har bir foydalanuvchiga bildirishnoma yuborish
+    if (Array.isArray(user_id)) {
+      user_id.forEach((userId) => {
+        const userSocketId = socketConfig.getConnectedUsers()[userId];
+        if (userSocketId) {
+          socketConfig.getIO().to(userSocketId).emit("task_notification", {
+            task: {
+              id: result.task_id,
+              title: req.body.title,
+              status: req.body.status
+            },
+          });
+          console.log(`Task notification sent to user ${userId}`);
+        } else {
+          console.log(`User ${userId} is not connected`);
+        }
+      });
+    }
+
+    res.status(200).send("Task assigned and notifications sent successfully!");
+  } catch (err) {
+    console.error("Error assigning task:", err);
+    res.status(500).send("Internal server error: " + err.message);
+  }
+});
 
 // Ma'lumotlar bazasi bilan ulanish
 (async () => {
@@ -64,12 +168,12 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
 // server PORT
 const PORT = getDotEnv("EXPRESS_PORT") || 3000;
-const server = app.listen(PORT, () => {
+const serverApp = app.listen(PORT, () => {
   console.log(chalk.blueBright(`Server ${PORT} da ishlayapti`));
 });
 
 // Serverdagi xatoliklarni boshqarish
-server.on("error", (err) => {
+serverApp.on("error", (err) => {
   if (err.code === "EADDRINUSE") {
     console.error(
       `Port ${PORT} band qilingan. Eski jarayonni to'xtating yoki boshqa portni tanlang.`
@@ -78,3 +182,8 @@ server.on("error", (err) => {
     console.error("Serverda xatolik yuz berdi:", err.message);
   }
 });
+
+// Socket ulanishlarini tekshirish
+setInterval(() => {
+  console.log("Connected users:", socketConfig.getConnectedUsers());
+}, 5000);

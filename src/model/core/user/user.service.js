@@ -377,6 +377,7 @@ export async function updateUser(req, res) {
     let newPicture = oldDataUser.picture; // Default to old picture
     let newFile = oldDataUser.file; // Default to old file path
     
+
     if (req.file) {
       // Delete old picture if it exists and is not the default
       if (oldDataUser.picture && oldDataUser.picture !== "default-ava.png") {

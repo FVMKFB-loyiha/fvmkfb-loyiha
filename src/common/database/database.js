@@ -9,11 +9,9 @@ async function connectToDb() {
   while (retries < maxRetries) {
     try {
       await sequelize.authenticate();
-      console.log("Successfully connected to database");
       await setupModels();
-
       await sequelize.sync({ logging: false, force: false });
-      console.log("Database models synchronized successfully");
+
       return true;
     } catch (err) {
       retries++;
