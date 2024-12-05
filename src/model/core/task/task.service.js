@@ -294,7 +294,7 @@ export async function getAllTask(req, res) {
     res.status(500).send({
       error: "Serverda xatolik yuz berdi",
       message: err.message,
-    })
+    });
   }
 }
 
