@@ -9,7 +9,6 @@ const __dirname = dirname(__filename);
 
 const PORT = getDotEnv("EXPRESS_PORT");
 const swaggerPaths = join(__dirname, "../../swagger/paths/*.js");
-const swaggerSchemas = join(__dirname, "../../swagger/schemas/*.js");
 
 const swaggerOptions = {
   definition: {
@@ -19,13 +18,23 @@ const swaggerOptions = {
       version: "1.0.0",
       description: "FVMKFB RESTFUL API",
     },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+          description: "JWT token kiriting. Misol: Bearer eyJhbGc...",
+        },
+      },
+    },
     servers: [
       {
         url: `http://localhost:${PORT}`,
       },
     ],
   },
-  apis: [swaggerPaths, swaggerSchemas],
+  apis: [swaggerPaths],
 };
 
 const swaggerDoc = swaggerJsDoc(swaggerOptions);

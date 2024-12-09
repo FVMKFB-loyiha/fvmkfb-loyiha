@@ -1,3 +1,4 @@
+import { log } from "console";
 import {
   addTaskValidator,
   getTaskValidator,
@@ -11,7 +12,6 @@ import path from "path";
 // import * as socketConfig from "../../../common/config/socket.io.config.js";
 
 // add Task ✅
-
 export async function addTask(req, res) {
   let transaction; // Tranzaksiya global scope'da e'lon qilindi
 
@@ -25,6 +25,7 @@ export async function addTask(req, res) {
 
     const userRole = req.user?.role;
     console.log("User role:", userRole);
+
     if (userRole !== "admin") {
       throw new Error("Yangi vazifani faqat admin qo'shishi mumkin!");
     }
@@ -36,7 +37,7 @@ export async function addTask(req, res) {
         throw new Error("Hodimlarning IDlari noto'g'ri formatda yuborilgan.");
       }
     }
-
+    log(user_id);
     if (!user_id || !Array.isArray(user_id) || user_id.length === 0) {
       throw new Error("Topshiriqqa hech bo'lmaganda bitta hodim tanlang.");
     }

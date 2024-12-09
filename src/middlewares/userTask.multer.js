@@ -18,7 +18,15 @@ const MAX_FILE_SIZE = 25 * 1024 * 1024;
 // Configure storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadDir = "./uploads/admin-task/";
+    let uploadDir;
+    console.log("user.role ##########", req.user.role);
+    console.log("req.user ##########", req.user);
+
+    if (req.user && req.user.role === "admin") {
+      uploadDir = "./uploads/admin-task/";
+    } else {
+      uploadDir = "./uploads/user-file/";
+    }
 
     // Create directory if it doesn't exist
     if (!fs.existsSync(uploadDir)) {
@@ -102,13 +110,13 @@ export function fileDownloadMiddleware(req, res, next) {
     }
 
     // If no file was uploaded
-    if (!req.file) {
-      return res.status(400).json({
-        error: "No file uploaded",
-        message: "Please select a file to upload",
-        code: "NO_FILE",
-      });
-    }
+    // if (!req.file) {
+    //   return res.status(400).json({
+    //     error: "No file uploaded",                  // file upload requred emas
+    //     message: "Please select a file to upload",
+    //     code: "NO_FILE",
+    //   });
+    // }
 
     // Log successful upload
     console.log("File uploaded successfully:", {
