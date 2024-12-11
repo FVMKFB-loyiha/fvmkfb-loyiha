@@ -41,7 +41,8 @@ async function authGuard(req, res, next) {
     // Foydalanuvchini request obyektiga qo'shish
     req.user = user;
     req.token = token;
-
+    console.log("jsonwebtoken: ", req.user)
+    console.log("jsonwebtoken: ", req.body)
     next(); // Keyingi middleware yoki handlerga o'tish
   } catch (err) {
     console.log("Autentifikatsiya xatosi: ", err.message);

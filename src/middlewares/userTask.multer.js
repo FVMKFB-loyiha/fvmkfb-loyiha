@@ -26,6 +26,14 @@ const storage = multer.diskStorage({
       uploadDir = "./uploads/tasks/";
     } else {
       return cb(new Error("Invalid task type"));
+
+    console.log("user.role ##########", req.user.role);
+    console.log("req.user ##########", req.user);
+
+    if (req.user && req.user.role === "admin") {
+      uploadDir = "./uploads/admin-task/";
+    } else {
+      uploadDir = "./uploads/user-file/";
     }
 
     // Create directory if it doesn't exist
@@ -34,7 +42,7 @@ const storage = multer.diskStorage({
     }
 
     cb(null, uploadDir);
-  },
+  }},
   filename: function (req, file, cb) {
     // Generate unique filename
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -110,13 +118,13 @@ export function fileDownloadMiddleware(req, res, next) {
     }
 
     // If no file was uploaded
-    if (!req.file) {
-      return res.status(400).json({
-        error: "No file uploaded",
-        message: "Please select a file to upload",
-        code: "NO_FILE",
-      });
-    }
+    // if (!req.file) {
+    //   return res.status(400).json({
+    //     error: "No file uploaded",                  // file upload requred emas
+    //     message: "Please select a file to upload",
+    //     code: "NO_FILE",
+    //   });
+    // }
 
     // Log successful upload
     console.log("File uploaded successfully:", {
@@ -126,7 +134,7 @@ export function fileDownloadMiddleware(req, res, next) {
       timestamp: new Date().toISOString(),
       user: req.user?.id,
     });
-
+console.log("multer storage file=> ", req.file)
     next();
   });
 }

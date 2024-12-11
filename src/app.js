@@ -61,7 +61,7 @@ app.use("/user_task", userTaskRouter);
 import cors from "cors";
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "*",
     methods: ["GET", "POST", "PATCH", "DELETE"],
     credentials: true,
   })
@@ -69,9 +69,32 @@ app.use(
 app.use(cors());
 
 // Swagger API documentationni ulash
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
-
-
+// app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDoc, {
+    explorer: true,
+    customCss: ".swagger-ui .topbar { display: none }",
+    swaggerOptions: {
+      validatorUrl: null,
+      supportedSubmitMethods: ["get", "post", "put", "delete", "patch"],
+      defaultModelsExpandDepth: -1,
+      persistAuthorization: true,
+      authAction: {
+        bearerAuth: {
+          name: "bearerAuth",
+          schema: {
+            type: 'apiKey',
+            in: 'header',
+            name: 'Authorization',
+            description: "JWT token kiriting"
+          }
+        }
+      }
+    }
+  })
+);
 // app.post("/send-task", authenticateToken, upload.single('file'), async (req, res) => {
 //   try {
 //     const result = await addTask(req);
@@ -85,7 +108,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 //         throw new Error("user_id noto'g'ri formatda");
 //       }
 //     }
-    
+
 //     // Har bir foydalanuvchiga bildirishnoma yuborish
 //     if (Array.isArray(user_id)) {
 //       user_id.forEach((userId) => {
@@ -143,6 +166,6 @@ serverApp.on("error", (err) => {
 });
 
 // Socket ulanishlarini tekshirish
-setInterval(() => {
-  console.log("Connected users:", socketConfig.getConnectedUsers());
-}, 5000);
+// setInterval(() => {
+//   console.log("Connected users:", socketConfig.getConnectedUsers());
+// }, 5000);

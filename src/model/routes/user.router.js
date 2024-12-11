@@ -9,6 +9,7 @@ import {
   updateUser,
 } from "../core/user/user.service.js";
 import { profilePicMiddleware } from "../../middlewares/rasmYuklash.js";
+import authGuard from "../../common/guard/auth.guard.js";
 
 const userRouter = Router();
 

@@ -15,12 +15,12 @@ import authGuard from "../../common/guard/auth.guard.js";
 const taskRouter = Router();
 
 taskRouter
-  .get("/", authGuard ,getAllTask)
+  .get("/", authGuard, getAllTask)
   .get("/:id", getTask)
-  .post("/", authGuard ,fileDownloadMiddleware, addTask)
-  .post("/status", authGuard ,handleXodimDecision)
-  .post("/vazifa", authGuard, fileDownloadMiddleware ,handleTaskCompletion)
-  .put("/:id", authGuard, fileDownloadMiddleware, updateTask)
-  .delete("/:id", authGuard ,deleteTask);
+  .post("/", authGuard, fileDownloadMiddleware, addTask)
+  .post("/status", authGuard, handleXodimDecision)
+  .post("/complete", authGuard, fileDownloadMiddleware, handleTaskCompletion)
+  .patch("/:id", authGuard, fileDownloadMiddleware, updateTask)
+  .delete("/:id", authGuard, deleteTask);
 
 export default taskRouter;
