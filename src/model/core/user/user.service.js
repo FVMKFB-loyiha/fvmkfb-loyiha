@@ -170,6 +170,7 @@ export async function loginUser(req, res) {
   }
 }
 
+
 // soring users ✅
 export async function searchUserController(req, res) {
   try {

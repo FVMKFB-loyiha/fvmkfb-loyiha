@@ -33,7 +33,7 @@ const userModel = sequelize.define(
 
     picture: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
 
     file: {
