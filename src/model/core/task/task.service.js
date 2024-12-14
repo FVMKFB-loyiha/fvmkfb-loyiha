@@ -15,10 +15,12 @@ import path from "path";
 export async function addTask(req, res) {
   let transaction; // Tranzaksiya global scope'da e'lon qilindi
 
+
   try {
     const { title, status } = req.body;
     let { user_id } = req.body;
 
+    
     if (!req.file) {
       throw new Error("Fayl yuklanmadi");
     }

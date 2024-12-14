@@ -154,6 +154,7 @@ const serverApp = app.listen(PORT, () => {
   console.log(chalk.blueBright(`Server ${PORT} da ishlayapti`));
 });
 
+
 // Serverdagi xatoliklarni boshqarish
 serverApp.on("error", (err) => {
   if (err.code === "EADDRINUSE") {
