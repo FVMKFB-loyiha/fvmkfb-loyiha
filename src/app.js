@@ -61,7 +61,7 @@ app.use("/user_task", userTaskRouter);
 import cors from "cors";
 app.use(
   cors({
-    origin: "*",
+    origin: "http://localhost:5173/",
     methods: ["GET", "POST", "PATCH", "DELETE"],
     credentials: true,
   })
