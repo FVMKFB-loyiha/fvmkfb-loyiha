@@ -107,7 +107,7 @@ export async function userFamilyInfo(req, res) {
   const familyInfo = req.body;
 
   if (!Array.isArray(familyInfo)) {
-    return res.json({
+    return res.status(403).json({
       success: false,
       message: "Invalid data format, send it in json format!",
     });
@@ -121,7 +121,7 @@ export async function userFamilyInfo(req, res) {
       message: "Something went wrong when saving data to database",
     });
   } else {
-    res.send({
+    res.status(201).send({
       success: true,
       data: createdMembers,
     });
@@ -427,7 +427,7 @@ export async function updateUser(req, res) {
       where: { user_id: id },
     });
 
-    res.json(updatedUser);
+    res.status(200).json(updatedUser);
   } catch (err) {
     console.log(err);
     res.status(500).json(err.message);

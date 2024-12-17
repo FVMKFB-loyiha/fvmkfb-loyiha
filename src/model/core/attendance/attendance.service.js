@@ -34,7 +34,7 @@ export async function getAttendance(req, res) {
       },
     });
 
-    res.send(attendances);
+    res.status(200).send(attendances);
   } catch (error) {
     res.status(500).send(error.message);
   }
@@ -52,7 +52,7 @@ export async function updateAttendance(req, res) {
 
     await attendance.update({ status });
 
-    res.send(attendance);
+    res.status(200).send(attendance);
   } catch (error) {
     res.status(500).send(error.message);
   }
