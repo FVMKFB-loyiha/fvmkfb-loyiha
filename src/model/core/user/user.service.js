@@ -162,7 +162,7 @@ export async function loginUser(req, res) {
         token,
       });
     } else {
-      res.send("parol notog'ri");
+      res.status(401).send("Parol yoki elektron pochta xato");
     }
   } catch (err) {
     console.error("Xatolik yuz berdi:", err);
