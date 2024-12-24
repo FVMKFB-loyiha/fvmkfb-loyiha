@@ -39,7 +39,7 @@ export async function addTask(req, res) {
         throw new Error("Hodimlarning IDlari noto'g'ri formatda yuborilgan.");
       }
     }
-    
+
     log(user_id);
     if (!user_id || !Array.isArray(user_id) || user_id.length === 0) {
       throw new Error("Topshiriqqa hech bo'lmaganda bitta hodim tanlang.");
@@ -69,7 +69,7 @@ export async function addTask(req, res) {
     await user_taskModel.bulkCreate(taskAssignments, { transaction });
 
     await transaction.commit(); // Tranzaksiya muvaffaqiyatli yakunlandi
-    return res.send(result); // Natija qaytariladi
+    return res.status(201).send(result); // Natija qaytariladi
   } catch (err) {
     if (transaction) {
       try {
