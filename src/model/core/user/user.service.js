@@ -104,7 +104,7 @@ export async function registerUser(req, res) {
 }
 
 export async function userFamilyInfo(req, res) {
-  const familyInfo = req.body;
+  const familyInfo = req.body;  
 
   if (!Array.isArray(familyInfo)) {
     return res.status(403).json({
