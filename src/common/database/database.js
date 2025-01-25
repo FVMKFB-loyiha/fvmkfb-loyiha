@@ -1,3 +1,4 @@
+import { factory } from "typescript";
 import setupModels from "./association.js";
 import sequelize from "./sequelize.js";
 
@@ -10,7 +11,7 @@ async function connectToDb() {
     try {
       await sequelize.authenticate();
       await setupModels();
-      await sequelize.sync({ logging: false, force: false });
+      await sequelize.sync({ logging: false, force: true });
 
       return true;
     } catch (err) {

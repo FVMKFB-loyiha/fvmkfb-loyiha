@@ -6,12 +6,12 @@ const FamilyMember = sequelize.define("family_member", {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  fullName: {
+  family_fullname: {
     type: DataTypes.STRING,
     allowNull: false,
   },
   birth_data: {
-    type: DataTypes.DATE,
+    type: DataTypes.STRING,
     allowNull: false,
   },
   address: {
@@ -27,6 +27,10 @@ const FamilyMember = sequelize.define("family_member", {
     type: DataTypes.STRING,
     allowNull: true,
     defaultValue: "Kiritilmagan",
+  },
+  user_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
   },
 });
 

@@ -93,17 +93,19 @@
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             required:
  *               - fullname
  *               - email
+ *               - role
  *               - birth_date
  *               - department
  *               - position
  *               - phone
  *               - edu
+ *               - family
  *             properties:
  *               fullname:
  *                 type: string
@@ -112,14 +114,13 @@
  *                 type: string
  *                 format: email
  *                 description: User's email address
+ *               role:
+ *                 type: string
+ *                 description: User's role
  *               birth_date:
  *                 type: string
  *                 format: date
  *                 description: User's birth date (YYYY-MM-DD)
- *               picture:
- *                 type: string
- *                 format: binary
- *                 description: User's profile picture
  *               department:
  *                 type: string
  *                 description: User's department
@@ -130,11 +131,43 @@
  *                 type: string
  *                 description: User's phone number
  *               edu:
- *                 type: string
- *                 format: json
- *                 description: JSON string of education records array
- *                 example: |
- *                   [{"edu_name":"XYZ University","study_year":"2010-2014","degree":"Bachelor's","specialty":"Computer Science"}]
+ *                 type: object
+ *                 description: Education details
+ *                 properties:
+ *                   edu_name:
+ *                     type: string
+ *                     description: Name of the educational institution
+ *                   study_year:
+ *                     type: string
+ *                     description: Study year
+ *                   degree:
+ *                     type: string
+ *                     description: Degree obtained
+ *                   specialty:
+ *                     type: string
+ *                     description: Specialty
+ *               family:
+ *                 type: object
+ *                 description: Family details
+ *                 properties:
+ *                   family_member:
+ *                     type: string
+ *                     description: Family member relationship
+ *                   family_fullname:
+ *                     type: string
+ *                     description: Full name of the family member
+ *                   born_year:
+ *                     type: integer
+ *                     description: Birth year of the family member
+ *                   degree:
+ *                     type: string
+ *                     description: Degree of the family member
+ *                   address:
+ *                     type: string
+ *                     description: Address of the family member
+ *                   job_address:
+ *                     type: string
+ *                     description: Job address of the family member
  *     responses:
  *       '201':
  *         description: User registered successfully
