@@ -61,12 +61,12 @@ app.use("/user_task", userTaskRouter);
 import cors from "cors";
 app.use(
   cors({
-    origin: "*",
+    origin: "http://localhost:4000",
     methods: ["GET", "POST", "PATCH", "DELETE"],
     credentials: true,
   })
 );
-app.use(cors());
+
 
 // Swagger API documentationni ulash
 // app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
