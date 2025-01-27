@@ -55,6 +55,11 @@ const userModel = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    isWorking: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
   },
 
   {

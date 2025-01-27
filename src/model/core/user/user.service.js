@@ -15,6 +15,7 @@ import tasksModel from "../task/task.model.js";
 import eduModel from "./userEdu.model.js";
 import chalk from "chalk";
 import FamilyMember from "./user.family.model.js";
+import Joi from "joi";
 // import { profilePicMiddleware } from "../../../middlewares/rasmYuklash.js";
 
 // rasm saqlanadigan direktoriya
@@ -43,10 +44,23 @@ export async function registerUser(req, res) {
       position,
       phone,
       edu,
+      family,
     } = req.body;
 
     let picture = req.file ? req.file.filename : "default-ava.png";
     let filePath = req.file ? req.file.path : uploadDir + "default-ava.png";
+
+    const registerUserValidator = Joi.object({
+      fullname: Joi.string().required(),
+      email: Joi.string().email().required(),
+      role: Joi.string().required(),
+      birth_date: Joi.date().required(),
+      department: Joi.string().required(),
+      position: Joi.string().required(),
+      phone: Joi.string().required(),
+      edu: Joi.string().required(), // Ensure edu is a string
+      family: Joi.string().required(), // Ensure family is a string
+    });
 
     const { error } = registerUserValidator.validate({
       fullname,
@@ -56,38 +70,65 @@ export async function registerUser(req, res) {
       department,
       position,
       phone,
+      edu,
+      family,
     });
-    if (error) {
-      console.log("Validatsiya xatoligi:", error.details[0].message);
-      return res.status(400).send(error.details[0].message);
-    }
 
-    let eduParse = JSON.parse(edu);
+    if (error) {
+      return res.status(400).json({
+        message: "userni validation error berdi",
+        error: error.details[0].message,
+      });
+    }
 
     const user = await userModel.create({
       fullname,
       email,
       role,
       birth_date,
-      picture,
-      file: filePath,
       department,
       position,
       phone,
+      picture,
+      file: filePath,
     });
+    console.log("user", user);
 
-    // Edu ma'lumotlarini tekshirish
-    if (edu && Array.isArray(eduParse)) {
-      await Promise.all(
-        eduParse.map(async (eduItem) => {
-          await eduModel.create({
-            edu_name: eduItem.edu_name,
-            study_year: eduItem.study_year,
-            degree: eduItem.degree,
-            specialty: eduItem.specialty,
-            user_id: user.user_id, // Foydalanuvchi IDsi
-          });
-        })
+    let eduParse;
+    let familyParse;
+    try {
+      eduParse = JSON.parse(edu);
+      familyParse = JSON.parse(family);
+    } catch (err) {
+      return res.status(400).json({
+        message: " PArse da ERROR",
+        error: "Invalid JSON format for edu or family",
+      });
+    }
+
+    if (eduParse && Array.isArray(eduParse)) {
+      await eduModel.bulkCreate(
+        eduParse.map((eduItem) => ({
+          edu_name: eduItem.edu_name,
+          study_year: eduItem.study_year,
+          degree: eduItem.degree,
+          specialty: eduItem.specialty,
+          user_id: user.user_id,
+        }))
+      );
+    }
+
+    if (familyParse && Array.isArray(familyParse)) {
+      await FamilyMember.bulkCreate(
+        familyParse.map((familyItem) => ({
+          family_member: familyItem.family_member,
+          family_fullname: familyItem.family_fullname,
+          birth_data: familyItem.birth_data,
+          degree: familyItem.degree,
+          address: familyItem.address,
+          job_address: familyItem.job_address,
+          user_id: user.user_id,
+        }))
       );
     }
 
@@ -99,31 +140,6 @@ export async function registerUser(req, res) {
     res.status(500).json({
       message: "Foydalanuvchi ro'yxatdan o'tkazishda xatolik yuz berdi",
       error: err.message, // Aniqroq xatolik ma'lumoti
-    });
-  }
-}
-
-export async function userFamilyInfo(req, res) {
-  const familyInfo = req.body;
-
-  if (!Array.isArray(familyInfo)) {
-    return res.json({
-      success: false,
-      message: "Invalid data format, send it in json format!",
-    });
-  }
-
-  const createdMembers = await FamilyMember.insertMany(familyInfo);
-
-  if (!createdMembers) {
-    res.status(500).send({
-      success: false,
-      message: "Something went wrong when saving data to database",
-    });
-  } else {
-    res.send({
-      success: true,
-      data: createdMembers,
     });
   }
 }
@@ -162,7 +178,7 @@ export async function loginUser(req, res) {
         token,
       });
     } else {
-      res.send("parol notog'ri");
+      res.status(401).send("Parol yoki elektron pochta xato");
     }
   } catch (err) {
     console.error("Xatolik yuz berdi:", err);
@@ -249,7 +265,6 @@ export async function searchUserController(req, res) {
         {
           model: eduModel, // userEdu modelini qo'shamiz
           where: eduWhere, // userEdu uchun filter
-          required: degree || searchTerm ? true : false, // degree yoki searchTerm mavjud bo'lsa, majburiy join
         },
       ],
       attributes: [
@@ -427,7 +442,7 @@ export async function updateUser(req, res) {
       where: { user_id: id },
     });
 
-    res.json(updatedUser);
+    res.status(200).json(updatedUser);
   } catch (err) {
     console.log(err);
     res.status(500).json(err.message);

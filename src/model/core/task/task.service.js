@@ -23,20 +23,21 @@ export async function addTask(req, res) {
       throw new Error("Fayl yuklanmadi");
     }
 
-    const userRole = req.user?.role;
-    console.log("User role:", userRole);
-
-    if (userRole !== "admin") {
+    if (!req.user || req.user?.role !== "admin") {
       throw new Error("Yangi vazifani faqat admin qo'shishi mumkin!");
     }
 
-    if (typeof user_id === "string") {
+    if (!Array.isArray(user_id)) {
       try {
         user_id = JSON.parse(user_id);
-      } catch (error) {
+        if (!Array.isArray(user_id)) {
+          throw new Error();
+        }
+      } catch {
         throw new Error("Hodimlarning IDlari noto'g'ri formatda yuborilgan.");
       }
     }
+
     log(user_id);
     if (!user_id || !Array.isArray(user_id) || user_id.length === 0) {
       throw new Error("Topshiriqqa hech bo'lmaganda bitta hodim tanlang.");
@@ -56,9 +57,9 @@ export async function addTask(req, res) {
 
     console.log("Created task:", result.toJSON());
 
-    const taskAssignments = user_id.map((userId) => ({
+    const taskAssignments = user_id.map((user_id) => ({
       task_id: result.dataValues.task_id,
-      user_id: userId,
+      user_id: user_id,
     }));
 
     console.log("Task assignments to create:", taskAssignments);
@@ -66,7 +67,7 @@ export async function addTask(req, res) {
     await user_taskModel.bulkCreate(taskAssignments, { transaction });
 
     await transaction.commit(); // Tranzaksiya muvaffaqiyatli yakunlandi
-    return res.send(result); // Natija qaytariladi
+    return res.status(201).send(result); // Natija qaytariladi
   } catch (err) {
     if (transaction) {
       try {
@@ -380,66 +381,6 @@ export async function updateTask(req, res) {
     res.status(500).send("Topshiriqni yangilashda xatolik: " + err.message);
   }
 }
-
-// export async function updateTask(req, res) {
-//   try {
-//     const { id } = req.params;
-//     const updatedTask = req.body;
-//     const userRole= req.user?.role;
-
-//     if (userRole !== "admin") {
-//       return res.status(403).send("Topshiriqni faqat admin  tahrirlashi mumkin!");
-//     }
-
-//     const oldDataTask = await tasksModel.findOne({ where: { task_id: id } });
-//     if (!oldDataTask) {
-//       return res.status(404).send("Bunday ID'dagi topshiriq topilmadi!");
-//     }
-
-//     if (req.file) {
-//       // Delete old picture if it exists and is not the default
-//       if (oldDataTask.file && oldDataTask.file !== "default-ava.png") {
-//         const oldPicturePath = path.join(
-//           "./uploads/admin-task",
-//           oldDataTask.file
-//         );
-//         try {
-//           if (fs.existsSync(oldPicturePath)) {
-//             fs.unlinkSync(oldPicturePath);
-//           }
-//         } catch (error) {
-//           console.error("Error deleting old picture:", error);
-//         }
-//       }
-//       // Delete old file if it exists
-//       if (oldDataUser.file) {
-//         try {
-//           if (fs.existsSync(oldDataTask.file)) {
-//             fs.unlinkSync(oldDataTask.file);
-//           }
-//         } catch (error) {
-//           console.error("Error deleting old file:", error);
-//         }
-//       }
-//       // Set new picture and file path
-//       newPicture = req.file.filename;
-//       newFile = req.file.path;
-//     }
-
-//     const result = await tasksModel.update(updatedTask, { where: {task_id: id } });
-//     console.log("result", result);
-
-//     if (result[0] === 0) {
-//       return res.status(404).send("Bunday id dagi xona topilmadi!!");
-//     }
-
-//     res.status(200).send(result);
-//   } catch (err) {
-//     res
-//       .status(500)
-//       .send("Xona turini yangilashda xatolik bo'ldi: " + err.message);
-//   }
-// }
 
 export async function deleteTask(req, res) {
   try {

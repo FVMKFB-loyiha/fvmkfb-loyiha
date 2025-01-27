@@ -61,12 +61,13 @@ app.use("/user_task", userTaskRouter);
 import cors from "cors";
 app.use(
   cors({
-    origin: "http://localhost:4000",
+    origin: "*",
     methods: ["GET", "POST", "PATCH", "DELETE"],
-    credentials: true,
+    optionsSuccessStatus: 200,
+    origin: "*",
   })
 );
-
+app.use(cors());
 
 // Swagger API documentationni ulash
 // app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
@@ -85,14 +86,14 @@ app.use(
         bearerAuth: {
           name: "bearerAuth",
           schema: {
-            type: 'apiKey',
-            in: 'header',
-            name: 'Authorization',
-            description: "JWT token kiriting"
-          }
-        }
-      }
-    }
+            type: "apiKey",
+            in: "header",
+            name: "Authorization",
+            description: "JWT token kiriting",
+          },
+        },
+      },
+    },
   })
 );
 // app.post("/send-task", authenticateToken, upload.single('file'), async (req, res) => {
